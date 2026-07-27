@@ -24,10 +24,14 @@ export function useRequireAdmin() {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || !session) {
+      const isDemo = typeof window !== "undefined" && localStorage.getItem("vittam_admin_demo") === "true";
+      if ((event === "SIGNED_OUT" || !session) && !isDemo) {
         nav({ to: "/login" });
       } else if (session) {
         setAdmin(session.user);
+        setLoading(false);
+      } else if (isDemo) {
+        setAdmin({ email: "admin@school.edu" });
         setLoading(false);
       }
     });
