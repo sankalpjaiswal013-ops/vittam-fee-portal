@@ -159,8 +159,7 @@ function IngestStudents() {
         roll_no: r.roll_no,
         class: r.class,
         guardian_name: r.guardian_name,
-        guardian_contact: r.guardian_contact,
-        email: r.email
+        guardian_contact: r.guardian_contact
       }));
 
     try {
