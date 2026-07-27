@@ -160,8 +160,7 @@ function IngestStudents() {
         class: r.class,
         guardian_name: r.guardian_name,
         guardian_contact: r.guardian_contact,
-        email: r.email,
-        branch: r.branch
+        email: r.email
       }));
 
     try {

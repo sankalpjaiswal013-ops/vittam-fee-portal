@@ -601,8 +601,7 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
         class: r.class,
         guardian_name: r.guardian_name,
         guardian_contact: r.guardian_contact,
-        email: r.email,
-        branch: r.branch
+        email: r.email
       }));
 
     try {
