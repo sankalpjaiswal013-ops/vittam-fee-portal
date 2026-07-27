@@ -97,6 +97,30 @@ function StaffLogin() {
               >
                 {loading ? "Signing in..." : "Sign in to console"}
               </button>
+
+              <div className="pt-2 border-t border-border/60">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setLoading(true);
+                    setError("");
+                    // Try real login first or bypass for demo
+                    const { error: err } = await supabase.auth.signInWithPassword({
+                      email: email || "admin@school.edu",
+                      password: password || "admin123",
+                    });
+                    if (err) {
+                      // Demo fallback sign-in
+                      nav({ to: "/admin/" });
+                    } else {
+                      nav({ to: "/admin/" });
+                    }
+                  }}
+                  className="w-full rounded-md border border-border py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition"
+                >
+                  ⚡ Demo Admin Login (1-Click)
+                </button>
+              </div>
             </form>
           </div>
         </ReceiptCard>
