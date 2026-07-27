@@ -134,7 +134,7 @@ function StaffLogin() {
         <p className="mt-8 text-center text-xs text-muted-foreground">
           Not staff?{" "}
           <Link to="/student-login" className="underline underline-offset-4">
-            Go to Parent Portal
+            Go to Student & Parent Portal
           </Link>
           .
         </p>
