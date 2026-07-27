@@ -475,9 +475,50 @@ function ClassesTab() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TAB: STUDENTS
-// ─────────────────────────────────────────────────────────────────────────────
+interface Row {
+  name: string;
+  roll_no: string;
+  class: string;
+  guardian_name: string;
+  guardian_contact: string;
+  email: string;
+  branch: string;
+}
+
+function parseCsv(text: string): Row[] {
+  const lines = text.trim().split(/\r?\n/).filter(Boolean);
+  if (!lines.length) return [];
+  const [headerRow, ...rest] = lines;
+  
+  // Split columns, ignoring commas inside quotes
+  const cols = headerRow.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((c) => c.replace(/^["']|["']$/g, '').trim().toLowerCase());
+  
+  // Find column index based on synonyms
+  const getIndex = (synonyms: string[]) => {
+    return cols.findIndex((col) => synonyms.some((syn) => col.includes(syn) || syn.includes(col)));
+  };
+
+  const nameIdx = getIndex(["name", "student", "full"]);
+  const rollIdx = getIndex(["roll", "admission", "id", "no"]);
+  const classIdx = getIndex(["class", "grade", "standard", "sec"]);
+  const gNameIdx = getIndex(["guardian", "parent", "father", "mother"]);
+  const gContactIdx = getIndex(["contact", "phone", "mobile", "number"]);
+  const emailIdx = getIndex(["email", "gmail"]);
+  const branchIdx = getIndex(["branch", "campus"]);
+
+  return rest.map((line) => {
+    const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((p) => p.replace(/^["']|["']$/g, '').trim());
+    return {
+      name: nameIdx !== -1 ? (parts[nameIdx] ?? "") : "",
+      roll_no: rollIdx !== -1 ? (parts[rollIdx] ?? "") : "",
+      class: classIdx !== -1 ? (parts[classIdx] ?? "") : "",
+      guardian_name: gNameIdx !== -1 ? (parts[gNameIdx] ?? "") : "",
+      guardian_contact: gContactIdx !== -1 ? (parts[gContactIdx] ?? "") : "",
+      email: emailIdx !== -1 ? (parts[emailIdx] ?? "") : "",
+      branch: branchIdx !== -1 ? (parts[branchIdx] ?? "Main") : "Main",
+    };
+  });
+}
 
 function StudentsTab() {
   const [students, setStudents] = useState<any[]>([]);
@@ -498,6 +539,7 @@ function StudentsTab() {
   const [docPreviewUrl, setDocPreviewUrl] = useState<string>("");
   const [converterRows, setConverterRows] = useState<any[]>([]);
   const [scanning, setScanning] = useState(false);
+  const [docTextContent, setDocTextContent] = useState<string>("");
 
   // Add student form
   const [mName, setMName] = useState(""); const [mRoll, setMRoll] = useState("");
@@ -535,40 +577,7 @@ Aarav Sharma,10B-02,10-B,Priya Sharma,+919812345342,priya@gmail.com,Jaipur Yad
 Isha Patel,9A-03,9-A,Rakesh Patel,+919900011122,rakesh@gmail.com,Dharams
 Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
 
-  const parsedRows = useMemo(() => {
-    const lines = csvText.trim().split(/\r?\n/).filter(Boolean);
-    if (!lines.length) return [];
-    const [headerRow, ...rest] = lines;
-    
-    // Split columns, ignoring commas inside quotes
-    const cols = headerRow.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((c) => c.replace(/^["']|["']$/g, '').trim().toLowerCase());
-    
-    // Find column index based on synonyms
-    const getIndex = (synonyms: string[]) => {
-      return cols.findIndex((col) => synonyms.some((syn) => col.includes(syn) || syn.includes(col)));
-    };
-
-    const nameIdx = getIndex(["name", "student", "full"]);
-    const rollIdx = getIndex(["roll", "admission", "id", "no"]);
-    const classIdx = getIndex(["class", "grade", "standard", "sec"]);
-    const gNameIdx = getIndex(["guardian", "parent", "father", "mother"]);
-    const gContactIdx = getIndex(["contact", "phone", "mobile", "number"]);
-    const emailIdx = getIndex(["email", "gmail"]);
-    const branchIdx = getIndex(["branch", "campus"]);
-
-    return rest.map((line) => {
-      const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((p) => p.replace(/^["']|["']$/g, '').trim());
-      return {
-        name: nameIdx !== -1 ? (parts[nameIdx] ?? "") : "",
-        roll_no: rollIdx !== -1 ? (parts[rollIdx] ?? "") : "",
-        class: classIdx !== -1 ? (parts[classIdx] ?? "") : "",
-        guardian_name: gNameIdx !== -1 ? (parts[gNameIdx] ?? "") : "",
-        guardian_contact: gContactIdx !== -1 ? (parts[gContactIdx] ?? "") : "",
-        email: emailIdx !== -1 ? (parts[emailIdx] ?? "") : "",
-        branch: branchIdx !== -1 ? (parts[branchIdx] ?? "Main") : "Main",
-      };
-    });
-  }, [csvText]);
+  const parsedRows = useMemo(() => parseCsv(csvText), [csvText]);
 
   const dupeRolls = useMemo(() => {
     const counts = new Map<string, number>();
@@ -880,15 +889,22 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                 <label className="flex h-48 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-[#1F2028] hover:border-[color:var(--marigold)] transition">
                   <input
                     type="file"
-                    accept="image/*,application/pdf,text/*"
-                    onChange={(e) => {
+                    accept="image/*,application/pdf,text/*,.csv"
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
                         setDocFile(file);
                         if (file.type.startsWith("image/")) {
                           setDocPreviewUrl(URL.createObjectURL(file));
+                          setDocTextContent("");
                         } else {
                           setDocPreviewUrl("");
+                          try {
+                            const text = await file.text();
+                            setDocTextContent(text);
+                          } catch (err) {
+                            setDocTextContent("");
+                          }
                         }
                       }
                     }}
@@ -896,7 +912,7 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                   />
                   <span className="text-3xl mb-2">📁</span>
                   <p className="font-serif text-sm text-white">Select document file</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">PNG, JPG, PDF, TXT</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">PNG, JPG, PDF, TXT, CSV</p>
                 </label>
               ) : (
                 <div className="space-y-4">
@@ -932,13 +948,20 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                         setScanning(true);
                         setTimeout(() => {
                           setScanning(false);
-                          // Prepopulate with mock scanned results for hackathon demo
+                          if (docTextContent) {
+                            const rows = parseCsv(docTextContent);
+                            if (rows.length > 0) {
+                              setConverterRows(rows);
+                              return;
+                            }
+                          }
+                          // Fallback to mock scanned results for hackathon demo
                           setConverterRows([
                             { name: "Devendra Singh", roll_no: "10B-05", class: "10-B", guardian_name: "Gajendra Singh", guardian_contact: "+919876543210", email: "devendra@gmail.com", branch: "Jaipur" },
                             { name: "Anjali Sharma", roll_no: "9A-04", class: "9-A", guardian_name: "Sunil Sharma", guardian_contact: "+919922883344", email: "anjali@yahoo.com", branch: "Dharamsala" },
                             { name: "Rahul Verma", roll_no: "8C-12", class: "8-C", guardian_name: "Meena Verma", guardian_contact: "+919811223344", email: "rahul@gmail.com", branch: "Jaipur" }
                           ]);
-                        }, 2000);
+                        }, 1500);
                       }}
                       disabled={scanning}
                       className="flex-1 bg-[color:var(--marigold)] text-black font-semibold py-2 rounded text-xs hover:brightness-95 disabled:opacity-50"
@@ -950,6 +973,7 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                         setDocFile(null);
                         setDocPreviewUrl("");
                         setConverterRows([]);
+                        setDocTextContent("");
                       }}
                       className="border border-[#27272A] text-white/70 px-3 py-2 rounded text-xs hover:bg-[#27272A]"
                     >
