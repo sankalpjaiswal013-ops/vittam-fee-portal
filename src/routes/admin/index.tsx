@@ -287,10 +287,14 @@ function ClassesTab() {
 
   useEffect(() => {
     if (!selectedGrade) return;
-    const classStr = `${selectedGrade}-${selectedSection}`;
+    const classHyphen = `${selectedGrade}-${selectedSection}`;
+    const classNoHyphen = `${selectedGrade}${selectedSection}`;
     setLoading(true);
     Promise.all([
-      supabase.from("student_balances").select("*").ilike("class", `${classStr}%`).order("name"),
+      supabase.from("student_balances")
+        .select("*")
+        .or(`class.ilike.${classHyphen}%,class.ilike.${classNoHyphen}%`)
+        .order("name"),
       supabase.from("fee_types").select("*"),
     ]).then(([studRes, ftRes]) => {
       setStudents(studRes.data || []);
