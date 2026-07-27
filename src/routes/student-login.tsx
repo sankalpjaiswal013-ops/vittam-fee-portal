@@ -115,6 +115,15 @@ function StudentLogin() {
               on record before access is granted.
             </p>
 
+            <div className="mt-4 p-3.5 bg-[color:var(--marigold)]/10 border border-[color:var(--marigold)]/30 rounded-lg text-xs space-y-1 text-left">
+              <p className="font-semibold text-white">🏆 Hackathon Testing Credentials:</p>
+              <p className="text-muted-foreground">
+                Student Full Name: <span className="font-mono text-white select-all font-semibold">Aarav Sharma</span><br />
+                Roll Number: <span className="font-mono text-white select-all font-semibold">10A-02</span>
+              </p>
+              <p className="text-[10px] text-muted-foreground italic">Note: The 6-digit OTP will pop up in a yellow notification box on the top-right once you submit.</p>
+            </div>
+
             {step === "identify" ? (
               <form className="mt-6 space-y-4" onSubmit={handleSendOTP}>
                 <div>

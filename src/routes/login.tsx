@@ -65,6 +65,15 @@ function StaffLogin() {
               Sign in to manage student records, assign fees, and reconcile deposit receipts.
             </p>
 
+            <div className="mt-4 p-3.5 bg-[color:var(--marigold)]/10 border border-[color:var(--marigold)]/30 rounded-lg text-xs space-y-1 text-left">
+              <p className="font-semibold text-white">🏆 Hackathon Admin Credentials:</p>
+              <p className="text-muted-foreground">
+                Email: <span className="font-mono text-white select-all font-semibold">admin@school.edu</span><br />
+                Password: <span className="font-mono text-white select-all font-semibold">admin123</span>
+              </p>
+              <p className="text-[10px] text-muted-foreground italic">Tip: You can also just click the <strong>⚡ Demo Admin Login (1-Click)</strong> button below.</p>
+            </div>
+
             <form className="mt-6 space-y-4" onSubmit={handleLogin}>
               <div>
                 <label className="mb-1 block text-sm font-medium">Email address</label>

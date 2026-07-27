@@ -26,20 +26,34 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
 function parseCsv(text: string): Row[] {
   const lines = text.trim().split(/\r?\n/).filter(Boolean);
   if (!lines.length) return [];
-  const [header, ...rest] = lines;
-  const cols = header.split(",").map((c) => c.trim().toLowerCase());
+  const [headerRow, ...rest] = lines;
+  
+  // Split columns, ignoring commas inside quotes
+  const cols = headerRow.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((c) => c.replace(/^["']|["']$/g, '').trim().toLowerCase());
+  
+  // Find column index based on synonyms
+  const getIndex = (synonyms: string[]) => {
+    return cols.findIndex((col) => synonyms.some((syn) => col.includes(syn) || syn.includes(col)));
+  };
+
+  const nameIdx = getIndex(["name", "student", "full"]);
+  const rollIdx = getIndex(["roll", "admission", "id", "no"]);
+  const classIdx = getIndex(["class", "grade", "standard", "sec"]);
+  const gNameIdx = getIndex(["guardian", "parent", "father", "mother"]);
+  const gContactIdx = getIndex(["contact", "phone", "mobile", "number"]);
+  const emailIdx = getIndex(["email", "gmail"]);
+  const branchIdx = getIndex(["branch", "campus"]);
+
   return rest.map((line) => {
-    const parts = line.split(",").map((c) => c.trim());
-    const rec: Record<string, string> = {};
-    cols.forEach((c, i) => (rec[c] = parts[i] ?? ""));
+    const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((p) => p.replace(/^["']|["']$/g, '').trim());
     return {
-      name: rec.name ?? "",
-      roll_no: rec.roll_no ?? "",
-      class: rec.class ?? "",
-      guardian_name: rec.guardian_name ?? "",
-      guardian_contact: rec.guardian_contact ?? "",
-      email: rec.email ?? "",
-      branch: rec.branch ?? "Main",
+      name: nameIdx !== -1 ? (parts[nameIdx] ?? "") : "",
+      roll_no: rollIdx !== -1 ? (parts[rollIdx] ?? "") : "",
+      class: classIdx !== -1 ? (parts[classIdx] ?? "") : "",
+      guardian_name: gNameIdx !== -1 ? (parts[gNameIdx] ?? "") : "",
+      guardian_contact: gContactIdx !== -1 ? (parts[gContactIdx] ?? "") : "",
+      email: emailIdx !== -1 ? (parts[emailIdx] ?? "") : "",
+      branch: branchIdx !== -1 ? (parts[branchIdx] ?? "Main") : "Main",
     };
   });
 }
