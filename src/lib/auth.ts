@@ -66,6 +66,42 @@ export async function requestStudentOTP(rollNo: string, name: string) {
     // Generate random 6-digit OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // Call Fast2SMS API if VITE_FAST2SMS_API_KEY is configured
+    const apiKey = import.meta.env.VITE_FAST2SMS_API_KEY;
+    if (apiKey && phone) {
+      try {
+        const cleanPhone = phone.replace(/\D/g, "");
+        const targetNumber = cleanPhone.length > 10 ? cleanPhone.slice(-10) : cleanPhone;
+
+        // Use proxy in local dev (localhost) or fallback to direct URL
+        const endpoint = window.location.hostname === "localhost" 
+          ? "/api/fast2sms" 
+          : "https://www.fast2sms.com/dev/bulkV2";
+
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Authorization": apiKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            route: "q",
+            message: `Your VITTAM verification code is ${otpCode}`,
+            numbers: targetNumber,
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          console.error("Fast2SMS API error:", errData);
+        } else {
+          console.log(`Fast2SMS: OTP code ${otpCode} successfully sent to ${targetNumber}`);
+        }
+      } catch (err) {
+        console.error("Fast2SMS API request failed:", err);
+      }
+    }
+
     return {
       ok: true,
       student: student as StudentSession,

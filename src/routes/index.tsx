@@ -368,13 +368,7 @@ function Landing() {
                   to="/student-login"
                   className="rounded-md bg-[color:var(--marigold)] px-5 py-3 text-sm font-medium text-[color:var(--primary-foreground)] shadow-sm hover:brightness-95 flex items-center gap-1.5"
                 >
-                  <span>🎓</span> Student Portal
-                </Link>
-                <Link
-                  to="/student-login"
-                  className="rounded-md border border-border px-5 py-3 text-sm font-medium hover:bg-secondary flex items-center gap-1.5"
-                >
-                  <span>👨‍👩‍👧</span> Parent Portal
+                  <span>🎓</span> Student & Parent Portal
                 </Link>
                 <Link
                   to="/admin/"

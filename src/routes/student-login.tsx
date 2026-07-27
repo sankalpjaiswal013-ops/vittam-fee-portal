@@ -7,7 +7,7 @@ import { requestStudentOTP, loginStudentSession, getStudentSession } from "@/lib
 export const Route = createFileRoute("/student-login")({
   head: () => ({
     meta: [
-      { title: "Parent login — Vittam" },
+      { title: "Student & Parent Login — Vittam" },
       { name: "description", content: "Sign in to see fee balance, receipts, and pay outstanding dues." },
     ],
   }),
@@ -109,7 +109,7 @@ function StudentLogin() {
 
         <ReceiptCard className="p-8">
           <div id="login">
-            <h1 className="font-serif text-3xl font-semibold">Parent sign-in</h1>
+            <h1 className="font-serif text-3xl font-semibold">Student & Parent Sign-in</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Roll number identifies the account. It is not a secret — an OTP goes to the guardian phone
               on record before access is granted.

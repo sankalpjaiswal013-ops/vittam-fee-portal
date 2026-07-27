@@ -16,6 +16,13 @@ export default defineConfig({
     server: {
       port: 3000,
       host: true,
+      proxy: {
+        "/api/fast2sms": {
+          target: "https://www.fast2sms.com/dev/bulkV2",
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/fast2sms/, ""),
+        },
+      },
     },
   },
 });

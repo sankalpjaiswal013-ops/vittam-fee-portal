@@ -13,13 +13,7 @@ export function SiteNav() {
             to="/student-login"
             className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary text-foreground transition-all flex items-center gap-1"
           >
-            <span>🎓</span> Student Login
-          </Link>
-          <Link
-            to="/student-login"
-            className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary text-foreground transition-all flex items-center gap-1"
-          >
-            <span>👨‍👩‍👧</span> Parent Login
+            <span>🎓</span> Student & Parent Portal
           </Link>
           <Link
             to="/admin/"

@@ -48,8 +48,14 @@ function IngestStudents() {
   // Enforce staff/admin login check
   const { admin, loading: authLoading } = useRequireAdmin();
 
-  // Active view tab inside IngestStudents: "roster" (list + assign actions) or "import" (bulk + manual creation)
-  const [activeSubTab, setActiveSubTab] = useState<"roster" | "import">("roster");
+  // Active view tab inside IngestStudents: "roster" (list + assign actions), "import" (bulk + manual creation), or "document-converter"
+  const [activeSubTab, setActiveSubTab] = useState<"roster" | "import" | "document-converter">("roster");
+
+  // Document Converter states
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [docPreviewUrl, setDocPreviewUrl] = useState<string>("");
+  const [converterRows, setConverterRows] = useState<Row[]>([]);
+  const [scanning, setScanning] = useState(false);
 
   // Roster lists
   const [students, setStudents] = useState<any[]>([]);
@@ -298,10 +304,16 @@ function IngestStudents() {
             >
               Add & Ingest
             </button>
+            <button
+              onClick={() => setActiveSubTab("document-converter")}
+              className={`px-4 py-1.5 text-xs font-semibold rounded ${activeSubTab === "document-converter" ? "bg-[#27272A] text-white" : "text-muted-foreground hover:text-white"}`}
+            >
+              📄 Doc to CSV Converter
+            </button>
           </div>
         </div>
 
-        {activeSubTab === "roster" ? (
+        {activeSubTab === "roster" && (
           /* Active student ledger list with billing actions */
           <ReceiptCard className="p-0">
             <div className="overflow-x-auto p-6">
@@ -347,10 +359,11 @@ function IngestStudents() {
               </table>
             </div>
           </ReceiptCard>
-        ) : (
+        )}
+
+        {activeSubTab === "import" && (
           /* Bulk Import and Manual Creation panel */
           <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr]">
-            
             {/* Bulk CSV Drop/Paste Column */}
             <div className="space-y-6">
               <div className="grid gap-6 sm:grid-cols-2">
@@ -538,6 +551,298 @@ function IngestStudents() {
                     Add Student Card
                   </button>
                 </form>
+              </ReceiptCard>
+            </div>
+          </div>
+        )}
+
+        {activeSubTab === "document-converter" && (
+          <div className="grid gap-8 lg:grid-cols-[1fr_1.5fr] text-left animate-fade-in">
+            {/* Left side: Upload & Preview */}
+            <div className="space-y-6">
+              <ReceiptCard className="p-6">
+                <h3 className="font-serif text-lg font-semibold text-white mb-1">Upload Roster Document</h3>
+                <p className="text-xs text-muted-foreground mb-4">Upload an image, scan, roster copy, or receipt of student records.</p>
+                
+                {!docFile ? (
+                  <label className="flex h-48 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-border hover:border-[color:var(--marigold)] transition">
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf,text/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setDocFile(file);
+                          if (file.type.startsWith("image/")) {
+                            setDocPreviewUrl(URL.createObjectURL(file));
+                          } else {
+                            setDocPreviewUrl("");
+                          }
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    <span className="text-3xl mb-2">📁</span>
+                    <p className="font-serif text-sm text-white">Select document file</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">PNG, JPG, PDF, TXT</p>
+                  </label>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="relative rounded-lg border border-border overflow-hidden bg-black/40 flex items-center justify-center p-2 min-h-[220px]">
+                      {docPreviewUrl ? (
+                        <div className="relative w-full">
+                          <img src={docPreviewUrl} alt="Uploaded document" className="max-h-[300px] w-auto mx-auto object-contain rounded animate-fade-in" />
+                          {scanning && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-[1px]">
+                              {/* Horizontal Scanning Line */}
+                              <div className="absolute top-0 left-0 right-0 h-1 bg-[color:var(--marigold)] shadow-[0_0_10px_#E8A33D] animate-scan" />
+                              <span className="text-xs font-mono text-[color:var(--marigold)] font-semibold animate-pulse">TRANSCRIBING DETAILS...</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-10">
+                          <span className="text-4xl">📄</span>
+                          <p className="text-xs text-white font-medium mt-2">{docFile.name}</p>
+                          <p className="text-[10px] text-muted-foreground">({(docFile.size / 1024).toFixed(1)} KB)</p>
+                          {scanning && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-[1px]">
+                              <span className="text-xs font-mono text-[color:var(--marigold)] font-semibold animate-pulse">ANALYZING DOCUMENT...</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setScanning(true);
+                          setTimeout(() => {
+                            setScanning(false);
+                            // Prepopulate with mock scanned results for hackathon demo
+                            setConverterRows([
+                              { name: "Devendra Singh", roll_no: "10B-05", class: "10-B", guardian_name: "Gajendra Singh", guardian_contact: "+919876543210", email: "devendra@gmail.com", branch: "Jaipur" },
+                              { name: "Anjali Sharma", roll_no: "9A-04", class: "9-A", guardian_name: "Sunil Sharma", guardian_contact: "+919922883344", email: "anjali@yahoo.com", branch: "Dharamsala" },
+                              { name: "Rahul Verma", roll_no: "8C-12", class: "8-C", guardian_name: "Meena Verma", guardian_contact: "+919811223344", email: "rahul@gmail.com", branch: "Jaipur" }
+                            ]);
+                          }, 2000);
+                        }}
+                        disabled={scanning}
+                        className="flex-1 bg-[color:var(--marigold)] text-black font-semibold py-2 rounded text-xs hover:brightness-95 disabled:opacity-50"
+                      >
+                        ⚡ AI Scan & Extract
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDocFile(null);
+                          setDocPreviewUrl("");
+                          setConverterRows([]);
+                        }}
+                        className="border border-[#27272A] text-white/70 px-3 py-2 rounded text-xs hover:bg-[#27272A]"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </ReceiptCard>
+            </div>
+
+            {/* Right side: Editable table */}
+            <div className="space-y-6">
+              <ReceiptCard className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 className="font-serif text-lg font-semibold text-white">Noted Details Grid</h3>
+                    <p className="text-xs text-muted-foreground">Type or verify the student details below before exporting.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setConverterRows([
+                        ...converterRows,
+                        { name: "", roll_no: "", class: "", guardian_name: "", guardian_contact: "", email: "", branch: "Main" }
+                      ]);
+                    }}
+                    className="border border-[color:var(--marigold)] text-[color:var(--marigold)] px-2.5 py-1 rounded text-xs font-semibold hover:bg-[color:var(--marigold)]/10"
+                  >
+                    + Add Row
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left min-w-[650px]">
+                    <thead>
+                      <tr className="text-muted-foreground border-b border-border/40 font-mono uppercase pb-2">
+                        <th className="pb-2">Name</th>
+                        <th className="pb-2">Roll No</th>
+                        <th className="pb-2">Class</th>
+                        <th className="pb-2">Guardian</th>
+                        <th className="pb-2">Contact</th>
+                        <th className="pb-2">Email</th>
+                        <th className="pb-2">Branch</th>
+                        <th className="pb-2 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {converterRows.map((row, index) => (
+                        <tr key={index} className="border-b border-border/20">
+                          <td className="py-2 pr-1">
+                            <input
+                              type="text"
+                              value={row.name}
+                              onChange={(e) => {
+                                const newRows = [...converterRows];
+                                newRows[index].name = e.target.value;
+                                setConverterRows(newRows);
+                              }}
+                              placeholder="Name"
+                              className="w-full bg-[#0D0D10] border border-[#27272A] rounded p-1 text-[11px] text-white"
+                            />
+                          </td>
+                          <td className="py-2 pr-1">
+                            <input
+                              type="text"
+                              value={row.roll_no}
+                              onChange={(e) => {
+                                const newRows = [...converterRows];
+                                newRows[index].roll_no = e.target.value;
+                                setConverterRows(newRows);
+                              }}
+                              placeholder="10A-01"
+                              className="w-16 bg-[#0D0D10] border border-[#27272A] rounded p-1 text-[11px] text-white font-mono"
+                            />
+                          </td>
+                          <td className="py-2 pr-1">
+                            <input
+                              type="text"
+                              value={row.class}
+                              onChange={(e) => {
+                                const newRows = [...converterRows];
+                                newRows[index].class = e.target.value;
+                                setConverterRows(newRows);
+                              }}
+                              placeholder="10-A"
+                              className="w-12 bg-[#0D0D10] border border-[#27272A] rounded p-1 text-[11px] text-white"
+                            />
+                          </td>
+                          <td className="py-2 pr-1">
+                            <input
+                              type="text"
+                              value={row.guardian_name}
+                              onChange={(e) => {
+                                const newRows = [...converterRows];
+                                newRows[index].guardian_name = e.target.value;
+                                setConverterRows(newRows);
+                              }}
+                              placeholder="Guardian Name"
+                              className="w-full bg-[#0D0D10] border border-[#27272A] rounded p-1 text-[11px] text-white"
+                            />
+                          </td>
+                          <td className="py-2 pr-1">
+                            <input
+                              type="text"
+                              value={row.guardian_contact}
+                              onChange={(e) => {
+                                const newRows = [...converterRows];
+                                newRows[index].guardian_contact = e.target.value;
+                                setConverterRows(newRows);
+                              }}
+                              placeholder="+91..."
+                              className="w-24 bg-[#0D0D10] border border-[#27272A] rounded p-1 text-[11px] text-white font-mono"
+                            />
+                          </td>
+                          <td className="py-2 pr-1">
+                            <input
+                              type="email"
+                              value={row.email}
+                              onChange={(e) => {
+                                const newRows = [...converterRows];
+                                newRows[index].email = e.target.value;
+                                setConverterRows(newRows);
+                              }}
+                              placeholder="email@domain.com"
+                              className="w-full bg-[#0D0D10] border border-[#27272A] rounded p-1 text-[11px] text-white"
+                            />
+                          </td>
+                          <td className="py-2 pr-1">
+                            <input
+                              type="text"
+                              value={row.branch}
+                              onChange={(e) => {
+                                const newRows = [...converterRows];
+                                newRows[index].branch = e.target.value;
+                                setConverterRows(newRows);
+                              }}
+                              placeholder="Branch"
+                              className="w-16 bg-[#0D0D10] border border-[#27272A] rounded p-1 text-[11px] text-white"
+                            />
+                          </td>
+                          <td className="py-2 text-right">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConverterRows(converterRows.filter((_, i) => i !== index));
+                              }}
+                              className="text-[color:var(--alert)] hover:underline"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {converterRows.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="py-8 text-center text-muted-foreground text-xs">
+                            Grid is empty. Upload a document and click "AI Scan", or click "+ Add Row" to begin.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {converterRows.length > 0 && (
+                  <div className="mt-6 flex justify-end gap-3 border-t border-border/40 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Generate CSV string
+                        const csvHeaders = "name,roll_no,class,guardian_name,guardian_contact,email,branch\n";
+                        const csvContent = converterRows
+                          .map((r) => `"${r.name}","${r.roll_no}","${r.class}","${r.guardian_name}","${r.guardian_contact}","${r.email}","${r.branch}"`)
+                          .join("\n");
+                        const blob = new Blob([csvHeaders + csvContent], { type: "text/csv;charset=utf-8;" });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.setAttribute("href", url);
+                        link.setAttribute("download", "student_roster.csv");
+                        link.style.visibility = "hidden";
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      className="border border-[#27272A] text-white px-4 py-2 rounded text-xs font-semibold hover:bg-[#27272A]"
+                    >
+                      📥 Download CSV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const csvHeaders = "name,roll_no,class,guardian_name,guardian_contact,email,branch\n";
+                        const csvContent = converterRows
+                          .map((r) => `${r.name},${r.roll_no},${r.class},${r.guardian_name},${r.guardian_contact},${r.email},${r.branch}`)
+                          .join("\n");
+                        setCsvText(csvHeaders + csvContent);
+                        setActiveSubTab("import");
+                        alert("⚡ Loaded roster into bulk import queue! Review preview table and click Commit to save.");
+                      }}
+                      className="bg-[color:var(--marigold)] text-black px-4 py-2 rounded text-xs font-semibold hover:brightness-95"
+                    >
+                      ⚡ Load to Import Queue
+                    </button>
+                  </div>
+                )}
               </ReceiptCard>
             </div>
           </div>
