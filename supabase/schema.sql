@@ -14,6 +14,7 @@ create table students (
   guardian_name text,
   guardian_contact text,
   scholarship_flag boolean default false,
+  transport_flag boolean default false,
   created_at timestamptz default now()
 );
 
@@ -81,6 +82,8 @@ select
   s.roll_no,
   s.class,
   s.guardian_contact,
+  s.scholarship_flag,
+  s.transport_flag,
   coalesce(sum(fa.amount), 0) as total_billed,
   coalesce(sum(case when t.status = 'reconciled' then t.amount else 0 end), 0) as total_paid,
   coalesce(sum(fa.amount), 0) - coalesce(sum(case when t.status = 'reconciled' then t.amount else 0 end), 0) as balance_due,
@@ -96,7 +99,7 @@ select
 from students s
 left join fee_assignments fa on fa.student_id = s.id
 left join transactions t on t.fee_assignment_id = fa.id
-group by s.id, s.name, s.roll_no, s.class, s.guardian_contact;
+group by s.id, s.name, s.roll_no, s.class, s.guardian_contact, s.scholarship_flag, s.transport_flag;
 
 -- Seed a few fee types to start with
 insert into fee_types (name, category, default_amount, recurring) values

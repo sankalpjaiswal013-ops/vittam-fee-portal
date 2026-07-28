@@ -11,12 +11,12 @@ delete from fee_assignments;
 delete from students;
 
 -- ── Students ──────────────────────────────────────────────
-insert into students (id, name, roll_no, class, guardian_name, guardian_contact, scholarship_flag) values
-  ('11111111-0000-0000-0000-000000000001', 'Arjun Mehta',     '10A-01', '10-A', 'Rakesh Mehta',   '+91 98765 00001', false),
-  ('11111111-0000-0000-0000-000000000002', 'Priya Sharma',    '10A-02', '10-A', 'Sunita Sharma',  '+91 98765 00002', true),
-  ('11111111-0000-0000-0000-000000000003', 'Karan Verma',     '9B-01',  '9-B',  'Mohan Verma',    '+91 98765 00003', false),
-  ('11111111-0000-0000-0000-000000000004', 'Ananya Iyer',     '9B-02',  '9-B',  'Deepa Iyer',     '+91 98765 00004', false),
-  ('11111111-0000-0000-0000-000000000005', 'Rohan Desai',     '8C-01',  '8-C',  'Vijay Desai',    '+91 98765 00005', false);
+insert into students (id, name, roll_no, class, guardian_name, guardian_contact, scholarship_flag, transport_flag) values
+  ('11111111-0000-0000-0000-000000000001', 'Arjun Mehta',     '10A-01', '10-A', 'Rakesh Mehta',   '+91 98765 00001', false, true),
+  ('11111111-0000-0000-0000-000000000002', 'Priya Sharma',    '10A-02', '10-A', 'Sunita Sharma',  '+91 98765 00002', true,  false),
+  ('11111111-0000-0000-0000-000000000003', 'Karan Verma',     '9B-01',  '9-B',  'Mohan Verma',    '+91 98765 00003', false, true),
+  ('11111111-0000-0000-0000-000000000004', 'Ananya Iyer',     '9B-02',  '9-B',  'Deepa Iyer',     '+91 98765 00004', false, false),
+  ('11111111-0000-0000-0000-000000000005', 'Rohan Desai',     '8C-01',  '8-C',  'Vijay Desai',    '+91 98765 00005', false, false);
 
 -- ── Fee type IDs (from seed in schema.sql — fetch real IDs if they differ) ──
 -- We'll use a subquery to get the actual IDs from fee_types

@@ -6,29 +6,29 @@ const BASE = "http://localhost:3000";
 
 // Realistic Indian school student roster — 20 students across 4 classes
 const STUDENTS = [
-  { name: "Arjun Mehta",      class: "10-A", roll_no: "10A-01", guardian_name: "Suresh Mehta",      guardian_contact: "9876543210", scholarship_flag: false },
-  { name: "Priya Sharma",     class: "10-A", roll_no: "10A-02", guardian_name: "Rekha Sharma",      guardian_contact: "9876543211", scholarship_flag: false },
-  { name: "Rahul Nair",       class: "10-A", roll_no: "10A-03", guardian_name: "Vijay Nair",        guardian_contact: "9876543212", scholarship_flag: true  },
-  { name: "Sneha Kulkarni",   class: "10-A", roll_no: "10A-04", guardian_name: "Mohan Kulkarni",   guardian_contact: "9876543213", scholarship_flag: false },
-  { name: "Dev Patel",        class: "10-A", roll_no: "10A-05", guardian_name: "Harish Patel",      guardian_contact: "9876543214", scholarship_flag: false },
+  { name: "Arjun Mehta",      class: "10-A", roll_no: "10A-01", guardian_name: "Suresh Mehta",      guardian_contact: "9876543210", scholarship_flag: false, transport_flag: true },
+  { name: "Priya Sharma",     class: "10-A", roll_no: "10A-02", guardian_name: "Rekha Sharma",      guardian_contact: "9876543211", scholarship_flag: false, transport_flag: false },
+  { name: "Rahul Nair",       class: "10-A", roll_no: "10A-03", guardian_name: "Vijay Nair",        guardian_contact: "9876543212", scholarship_flag: true,  transport_flag: false },
+  { name: "Sneha Kulkarni",   class: "10-A", roll_no: "10A-04", guardian_name: "Mohan Kulkarni",   guardian_contact: "9876543213", scholarship_flag: false, transport_flag: false },
+  { name: "Dev Patel",        class: "10-A", roll_no: "10A-05", guardian_name: "Harish Patel",      guardian_contact: "9876543214", scholarship_flag: false, transport_flag: true },
 
-  { name: "Karan Verma",      class: "9-B",  roll_no: "9B-01",  guardian_name: "Ashok Verma",       guardian_contact: "9876543220", scholarship_flag: false },
-  { name: "Ananya Iyer",      class: "9-B",  roll_no: "9B-02",  guardian_name: "Lakshmi Iyer",      guardian_contact: "9876543221", scholarship_flag: false },
-  { name: "Rohan Desai",      class: "9-B",  roll_no: "9B-03",  guardian_name: "Neha Desai",        guardian_contact: "9876543222", scholarship_flag: true  },
-  { name: "Kavya Menon",      class: "9-B",  roll_no: "9B-04",  guardian_name: "Rajan Menon",       guardian_contact: "9876543223", scholarship_flag: false },
-  { name: "Aditya Singh",     class: "9-B",  roll_no: "9B-05",  guardian_name: "Gurpreet Singh",    guardian_contact: "9876543224", scholarship_flag: false },
+  { name: "Karan Verma",      class: "9-B",  roll_no: "9B-01",  guardian_name: "Ashok Verma",       guardian_contact: "9876543220", scholarship_flag: false, transport_flag: false },
+  { name: "Ananya Iyer",      class: "9-B",  roll_no: "9B-02",  guardian_name: "Lakshmi Iyer",      guardian_contact: "9876543221", scholarship_flag: false, transport_flag: false },
+  { name: "Rohan Desai",      class: "9-B",  roll_no: "9B-03",  guardian_name: "Neha Desai",        guardian_contact: "9876543222", scholarship_flag: true,  transport_flag: false },
+  { name: "Kavya Menon",      class: "9-B",  roll_no: "9B-04",  guardian_name: "Rajan Menon",       guardian_contact: "9876543223", scholarship_flag: false, transport_flag: true },
+  { name: "Aditya Singh",     class: "9-B",  roll_no: "9B-05",  guardian_name: "Gurpreet Singh",    guardian_contact: "9876543224", scholarship_flag: false, transport_flag: false },
 
-  { name: "Ravi Kumar",       class: "11-A", roll_no: "11A-01", guardian_name: "Ramesh Kumar",      guardian_contact: "9876543230", scholarship_flag: false },
-  { name: "Meera Joshi",      class: "11-A", roll_no: "11A-02", guardian_name: "Sanjay Joshi",      guardian_contact: "9876543231", scholarship_flag: false },
-  { name: "Akash Pandey",     class: "11-A", roll_no: "11A-03", guardian_name: "Rakesh Pandey",     guardian_contact: "9876543232", scholarship_flag: true  },
-  { name: "Divya Reddy",      class: "11-A", roll_no: "11A-04", guardian_name: "Suresh Reddy",      guardian_contact: "9876543233", scholarship_flag: false },
-  { name: "Nikhil Shah",      class: "11-A", roll_no: "11A-05", guardian_name: "Bhavesh Shah",      guardian_contact: "9876543234", scholarship_flag: false },
+  { name: "Ravi Kumar",       class: "11-A", roll_no: "11A-01", guardian_name: "Ramesh Kumar",      guardian_contact: "9876543230", scholarship_flag: false, transport_flag: false },
+  { name: "Meera Joshi",      class: "11-A", roll_no: "11A-02", guardian_name: "Sanjay Joshi",      guardian_contact: "9876543231", scholarship_flag: false, transport_flag: false },
+  { name: "Akash Pandey",     class: "11-A", roll_no: "11A-03", guardian_name: "Rakesh Pandey",     guardian_contact: "9876543232", scholarship_flag: true,  transport_flag: false },
+  { name: "Divya Reddy",      class: "11-A", roll_no: "11A-04", guardian_name: "Suresh Reddy",      guardian_contact: "9876543233", scholarship_flag: false, transport_flag: false },
+  { name: "Nikhil Shah",      class: "11-A", roll_no: "11A-05", guardian_name: "Bhavesh Shah",      guardian_contact: "9876543234", scholarship_flag: false, transport_flag: true },
 
-  { name: "Pooja Rajput",     class: "8-C",  roll_no: "8C-01",  guardian_name: "Dinesh Rajput",     guardian_contact: "9876543240", scholarship_flag: false },
-  { name: "Siddharth Tiwari", class: "8-C",  roll_no: "8C-02",  guardian_name: "Arvind Tiwari",     guardian_contact: "9876543241", scholarship_flag: false },
-  { name: "Nandini Bhat",     class: "8-C",  roll_no: "8C-03",  guardian_name: "Krishna Bhat",      guardian_contact: "9876543242", scholarship_flag: false },
-  { name: "Farhan Siddiqui",  class: "8-C",  roll_no: "8C-04",  guardian_name: "Hamid Siddiqui",    guardian_contact: "9876543243", scholarship_flag: false },
-  { name: "Ishita Ghosh",     class: "8-C",  roll_no: "8C-05",  guardian_name: "Tapan Ghosh",       guardian_contact: "9876543244", scholarship_flag: true  },
+  { name: "Pooja Rajput",     class: "8-C",  roll_no: "8C-01",  guardian_name: "Dinesh Rajput",     guardian_contact: "9876543240", scholarship_flag: false, transport_flag: false },
+  { name: "Siddharth Tiwari", class: "8-C",  roll_no: "8C-02",  guardian_name: "Arvind Tiwari",     guardian_contact: "9876543241", scholarship_flag: false, transport_flag: false },
+  { name: "Nandini Bhat",     class: "8-C",  roll_no: "8C-03",  guardian_name: "Krishna Bhat",      guardian_contact: "9876543242", scholarship_flag: false, transport_flag: false },
+  { name: "Farhan Siddiqui",  class: "8-C",  roll_no: "8C-04",  guardian_name: "Hamid Siddiqui",    guardian_contact: "9876543243", scholarship_flag: false, transport_flag: false },
+  { name: "Ishita Ghosh",     class: "8-C",  roll_no: "8C-05",  guardian_name: "Tapan Ghosh",       guardian_contact: "9876543244", scholarship_flag: true,  transport_flag: false },
 ];
 
 const today = new Date();

@@ -43,14 +43,9 @@ function inr(val: number) {
 // English and Hindi Translations for Bilingual Parent View
 const translations = {
   en: {
-    titleStudent: "🎓 Student Ledger & Spending",
-    titleParent: "👨‍👩‍👧 Parent Fee Portal",
-    studentMode: "student mode",
-    parentMode: "parent mode",
-    studentViewBtn: "🎓 Student View",
-    parentViewBtn: "👨‍👩‍👧 Parent View",
-    descStudent: "Track your past spending, upcoming deadlines, late fees, and receipt history.",
-    descParent: "Review and settle your child's outstanding school fee invoices.",
+    titleFeePortal: "👨‍👩‍👧 Student & Parent Fee Portal",
+    feePortalMode: "fee portal",
+    descFeePortal: "Track past spending, review upcoming deadlines, and settle outstanding school fee invoices.",
     totalBilled: "Total Spent So Far",
     totalBilledDesc: "Across {count} settled receipts",
     outstanding: "Outstanding Balance",
@@ -103,14 +98,9 @@ const translations = {
     close: "Close"
   },
   hi: {
-    titleStudent: "🎓 छात्र खाता और खर्च",
-    titleParent: "👨‍👩‍👧 अभिभावक शुल्क पोर्टल",
-    studentMode: "छात्र मोड",
-    parentMode: "अभिभावक मोड",
-    studentViewBtn: "🎓 छात्र देखें",
-    parentViewBtn: "👨‍👩‍👧 अभिभावक देखें",
-    descStudent: "अपने पिछले खर्च, आगामी समय सीमा, विलंब शुल्क और रसीद इतिहास को ट्रैक करें।",
-    descParent: "अपने बच्चे के बकाया स्कूल शुल्क चालान की समीक्षा करें और भुगतान करें।",
+    titleFeePortal: "👨‍👩‍👧 छात्र और अभिभावक शुल्क पोर्टल",
+    feePortalMode: "शुल्क पोर्टल",
+    descFeePortal: "पिछले खर्च को ट्रैक करें, आगामी समय सीमा की समीक्षा करें और बकाया स्कूल शुल्क चालान का भुगतान करें।",
     totalBilled: "अब तक कुल खर्च",
     totalBilledDesc: "{count} भुगतान किए गए रसीदों में",
     outstanding: "बकाया राशि",
@@ -170,7 +160,6 @@ function StudentDashboard() {
   const [txns, setTxns] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [receipt, setReceipt] = useState<Transaction | null>(null);
-  const [viewMode, setViewMode] = useState<"student" | "parent">("student");
   const [lang, setLang] = useState<"en" | "hi">("en");
 
   // Payment states
@@ -409,14 +398,14 @@ function StudentDashboard() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="font-serif text-3xl font-semibold">
-                {viewMode === "student" ? t("titleStudent") : t("titleParent")}
+                {t("titleFeePortal")}
               </h1>
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[color:var(--marigold)]/10 text-[color:var(--marigold)] border border-[color:var(--marigold)]/30 uppercase tracking-widest font-mono">
-                {viewMode === "student" ? t("studentMode") : t("parentMode")}
+                {t("feePortalMode")}
               </span>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              {viewMode === "student" ? t("descStudent") : t("descParent")}
+              {t("descFeePortal")}
             </p>
           </div>
 
@@ -438,25 +427,6 @@ function StudentDashboard() {
                 }`}
               >
                 हिंदी (Hindi)
-              </button>
-            </div>
-
-            <div className="flex bg-secondary/30 rounded-lg p-1 border border-border/40 gap-1">
-              <button
-                onClick={() => setViewMode("student")}
-                className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
-                  viewMode === "student" ? "bg-[color:var(--marigold)] text-[#1a130a]" : "text-muted-foreground hover:text-white"
-                }`}
-              >
-                {t("studentViewBtn")}
-              </button>
-              <button
-                onClick={() => setViewMode("parent")}
-                className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
-                  viewMode === "parent" ? "bg-[color:var(--marigold)] text-[#1a130a]" : "text-muted-foreground hover:text-white"
-                }`}
-              >
-                {t("parentViewBtn")}
               </button>
             </div>
 

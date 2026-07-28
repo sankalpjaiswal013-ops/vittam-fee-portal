@@ -318,7 +318,25 @@ function ClassesTab() {
     if (!selectedGrade || !bulkFeeTypeId || !bulkDue) return;
     setBulkSubmitting(true);
     setBulkMsg("");
-    const rows = students.map((s) => ({
+
+    const selectedFeeType = feeTypes.find((f) => f.id === bulkFeeTypeId);
+    const isTransportFee = selectedFeeType?.category === "transport" || selectedFeeType?.name?.toLowerCase().includes("transport");
+    
+    const targetStudents = isTransportFee
+      ? students.filter((s) => s.transport_flag)
+      : students;
+
+    if (targetStudents.length === 0) {
+      setBulkMsg(
+        isTransportFee
+          ? "No students in this class use school transport. Fee not assigned."
+          : "No students in this class to assign fee."
+      );
+      setBulkSubmitting(false);
+      return;
+    }
+
+    const rows = targetStudents.map((s) => ({
       student_id: s.student_id,
       fee_type_id: bulkFeeTypeId,
       amount: bulkAmount,
@@ -326,7 +344,13 @@ function ClassesTab() {
       status: "pending",
     }));
     const { error } = await supabase.from("fee_assignments").insert(rows);
-    setBulkMsg(error ? `Error: ${error.message}` : `✓ Assigned fee to ${rows.length} students.`);
+    setBulkMsg(
+      error 
+        ? `Error: ${error.message}` 
+        : isTransportFee 
+        ? `✓ Assigned Transport Fee to ${rows.length} students who use school transport (skipped ${students.length - rows.length} students).`
+        : `✓ Assigned fee to ${rows.length} students.`
+    );
     setBulkSubmitting(false);
   }
 
@@ -493,6 +517,7 @@ interface Row {
   guardian_contact: string;
   email: string;
   branch: string;
+  transport?: boolean;
 }
 
 function parseCsv(text: string): Row[] {
@@ -515,9 +540,12 @@ function parseCsv(text: string): Row[] {
   const gContactIdx = getIndex(["contact", "phone", "mobile", "number"]);
   const emailIdx = getIndex(["email", "gmail"]);
   const branchIdx = getIndex(["branch", "campus"]);
+  const transportIdx = getIndex(["transport", "bus", "is_transport"]);
 
   return rest.map((line) => {
     const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((p) => p.replace(/^["']|["']$/g, '').trim());
+    const transportVal = transportIdx !== -1 ? (parts[transportIdx] ?? "") : "";
+    const transport = ["true", "yes", "y", "1"].includes(transportVal.toLowerCase().trim());
     return {
       name: nameIdx !== -1 ? (parts[nameIdx] ?? "") : "",
       roll_no: rollIdx !== -1 ? (parts[rollIdx] ?? "") : "",
@@ -526,6 +554,7 @@ function parseCsv(text: string): Row[] {
       guardian_contact: gContactIdx !== -1 ? (parts[gContactIdx] ?? "") : "",
       email: emailIdx !== -1 ? (parts[emailIdx] ?? "") : "",
       branch: branchIdx !== -1 ? (parts[branchIdx] ?? "Main") : "Main",
+      transport,
     };
   });
 }
@@ -559,6 +588,7 @@ function StudentsTab() {
   const [mName, setMName] = useState(""); const [mRoll, setMRoll] = useState("");
   const [mClass, setMClass] = useState(""); const [mGuardian, setMGuardian] = useState("");
   const [mPhone, setMPhone] = useState(""); const [mEmail, setMEmail] = useState("");
+  const [mTransport, setMTransport] = useState(false);
   const [addMsg, setAddMsg] = useState(""); const [addErr, setAddErr] = useState("");
   const [adding, setAdding] = useState(false);
 
@@ -591,10 +621,10 @@ function StudentsTab() {
 
   useEffect(() => { load(); }, []);
 
-  const CSV_EXAMPLE = `name,roll_no,class,guardian_name,guardian_contact,email,branch
-Aarav Sharma,10B-02,10-B,Priya Sharma,+919812345342,priya@gmail.com,Jaipur Yad
-Isha Patel,9A-03,9-A,Rakesh Patel,+919900011122,rakesh@gmail.com,Dharams
-Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
+  const CSV_EXAMPLE = `name,roll_no,class,guardian_name,guardian_contact,email,branch,transport
+Aarav Sharma,10B-02,10-B,Priya Sharma,+919812345342,priya@gmail.com,Jaipur Yad,yes
+Isha Patel,9A-03,9-A,Rakesh Patel,+919900011122,rakesh@gmail.com,Dharams,no
+Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad,yes`;
 
   const parsedRows = useMemo(() => parseCsv(csvText), [csvText]);
 
@@ -619,11 +649,12 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
         roll_no: r.roll_no,
         class: r.class,
         guardian_name: r.guardian_name,
-        guardian_contact: r.guardian_contact
+        guardian_contact: r.guardian_contact,
+        transport_flag: r.transport
       }));
 
     try {
-      const { error } = await supabase.from("students").insert(rowsToInsert);
+      const { error } = await supabase.from("students").upsert(rowsToInsert, { onConflict: "roll_no" });
       if (error) {
         setImportError(error.message);
       } else {
@@ -729,15 +760,26 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
       name: mName.trim(), roll_no: mRoll.trim().toUpperCase(),
       class: mClass.trim(), guardian_name: mGuardian.trim() || null,
       guardian_contact: mPhone.trim() || null, email: mEmail.trim() || null,
+      transport_flag: mTransport
     });
     if (error) setAddErr(error.message);
-    else { setAddMsg(`✓ Student "${mName}" added.`); setMName(""); setMRoll(""); setMClass(""); setMGuardian(""); setMPhone(""); setMEmail(""); load(); }
+    else { setAddMsg(`✓ Student "${mName}" added.`); setMName(""); setMRoll(""); setMClass(""); setMGuardian(""); setMPhone(""); setMEmail(""); setMTransport(false); load(); }
     setAdding(false);
   }
 
   async function handleAssignFee(e: React.FormEvent) {
     e.preventDefault();
     if (!feeStudent || !feeTypeId || !dueDate) return;
+
+    const selectedFeeType = feeTypes.find((f) => f.id === feeTypeId);
+    const isTransportFee = selectedFeeType?.category === "transport" || selectedFeeType?.name?.toLowerCase().includes("transport");
+    if (isTransportFee && !feeStudent.transport_flag) {
+      const confirmAssign = window.confirm(
+        `Warning: ${feeStudent.name} is not marked as using school transport. Are you sure you want to assign the Transport Fee?`
+      );
+      if (!confirmAssign) return;
+    }
+
     const { error } = await supabase.from("fee_assignments").insert({
       student_id: feeStudent.student_id, fee_type_id: feeTypeId,
       amount: feeAmount, due_date: dueDate, status: "pending",
@@ -835,7 +877,12 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                             className="rounded"
                           />
                         </td>
-                        <td className="py-3.5 px-5 font-medium text-foreground">{s.name}</td>
+                        <td className="py-3.5 px-5 font-medium text-foreground">
+                          <div className="flex items-center gap-1.5">
+                            {s.name}
+                            {s.transport_flag && <span title="Uses School Transport">🚌</span>}
+                          </div>
+                        </td>
                         <td className="py-3.5 px-5 font-mono text-xs text-[#9CA3AF]">{s.class} · {s.roll_no}</td>
                         <td className="py-3.5 px-5 text-xs text-[#6B7280]">{s.guardian_name || "—"}</td>
                         <td className="py-3.5 px-5 font-mono text-[#E8A33D]">{inr(Number(s.balance || 0))}</td>
@@ -873,6 +920,12 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                   placeholder={f.placeholder} required={f.required} className="admin-input" />
               </Field>
             ))}
+            <div className="flex items-center gap-2 py-2">
+              <input type="checkbox" id="mTransport" checked={mTransport} onChange={(e) => setMTransport(e.target.checked)} className="rounded border-[#1F2028] bg-[#0D0D10]" />
+              <label htmlFor="mTransport" className="text-xs text-white font-medium cursor-pointer flex items-center gap-1">
+                <span>🚌</span> Uses School Transport
+              </label>
+            </div>
             {addErr && <p className="text-xs text-[#C4432B] bg-[#C4432B]/10 p-2 rounded">{addErr}</p>}
             {addMsg && <p className="text-xs text-[#2F6B4F] bg-[#2F6B4F]/10 p-2 rounded">{addMsg}</p>}
             <button type="submit" disabled={adding} className="w-full modal-primary">
@@ -1144,7 +1197,7 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                   onClick={() => {
                     setConverterRows([
                       ...converterRows,
-                      { name: "", roll_no: "", class: "", guardian_name: "", guardian_contact: "", email: "", branch: "Main" }
+                      { name: "", roll_no: "", class: "", guardian_name: "", guardian_contact: "", email: "", branch: "Main", transport: false }
                     ]);
                   }}
                   className="border border-[color:var(--marigold)] text-[color:var(--marigold)] px-2.5 py-1 rounded text-xs font-semibold hover:bg-[color:var(--marigold)]/10"
@@ -1164,6 +1217,7 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                       <th className="pb-2">Contact</th>
                       <th className="pb-2">Email</th>
                       <th className="pb-2">Branch</th>
+                      <th className="pb-2 text-center">Transport</th>
                       <th className="pb-2 text-right">Action</th>
                     </tr>
                   </thead>
@@ -1261,6 +1315,18 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                             className="w-16 bg-[#0D0D10] border border-[#27272A] rounded p-1 text-[11px] text-white"
                           />
                         </td>
+                        <td className="py-2 pr-1 text-center">
+                          <input
+                            type="checkbox"
+                            checked={!!row.transport}
+                            onChange={(e) => {
+                              const newRows = [...converterRows];
+                              newRows[index].transport = e.target.checked;
+                              setConverterRows(newRows);
+                            }}
+                            className="rounded border-[#27272A] bg-[#0D0D10]"
+                          />
+                        </td>
                         <td className="py-2 text-right">
                           <button
                             type="button"
@@ -1276,7 +1342,7 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                     ))}
                     {converterRows.length === 0 && (
                       <tr>
-                        <td colSpan={8} className="py-8 text-center text-muted-foreground text-xs">
+                        <td colSpan={9} className="py-8 text-center text-muted-foreground text-xs">
                           Grid is empty. Upload a document and click "AI Scan", or click "+ Add Row" to begin.
                         </td>
                       </tr>
@@ -1291,9 +1357,9 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                     type="button"
                     onClick={() => {
                       // Generate CSV string
-                      const csvHeaders = "name,roll_no,class,guardian_name,guardian_contact,email,branch\n";
+                      const csvHeaders = "name,roll_no,class,guardian_name,guardian_contact,email,branch,transport\n";
                       const csvContent = converterRows
-                        .map((r) => `"${r.name}","${r.roll_no}","${r.class}","${r.guardian_name}","${r.guardian_contact}","${r.email}","${r.branch}"`)
+                        .map((r) => `"${r.name}","${r.roll_no}","${r.class}","${r.guardian_name}","${r.guardian_contact}","${r.email}","${r.branch}","${r.transport ? "yes" : "no"}"`)
                         .join("\n");
                       const blob = new Blob([csvHeaders + csvContent], { type: "text/csv;charset=utf-8;" });
                       const url = URL.createObjectURL(blob);
@@ -1312,9 +1378,9 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                   <button
                     type="button"
                     onClick={() => {
-                      const csvHeaders = "name,roll_no,class,guardian_name,guardian_contact,email,branch\n";
+                      const csvHeaders = "name,roll_no,class,guardian_name,guardian_contact,email,branch,transport\n";
                       const csvContent = converterRows
-                        .map((r) => `${r.name},${r.roll_no},${r.class},${r.guardian_name},${r.guardian_contact},${r.email},${r.branch}`)
+                        .map((r) => `${r.name},${r.roll_no},${r.class},${r.guardian_name},${r.guardian_contact},${r.email},${r.branch},${r.transport ? "yes" : "no"}`)
                         .join("\n");
                       setCsvText(csvHeaders + csvContent);
                       setSubTab("import");

@@ -16,12 +16,12 @@ export const Route = createFileRoute("/admin/students")({
   component: IngestStudents,
 });
 
-type Row = { name: string; roll_no: string; class: string; guardian_name: string; guardian_contact: string; email: string; branch: string };
+type Row = { name: string; roll_no: string; class: string; guardian_name: string; guardian_contact: string; email: string; branch: string; transport?: boolean };
 
-const example = `name,roll_no,class,guardian_name,guardian_contact,email,branch
-Aarav Sharma,10B-02,10-B,Priya Sharma,+919812345342,priya@gmail.com,Jaipur Yad
-Isha Patel,9A-03,9-A,Rakesh Patel,+919900011122,rakesh@gmail.com,Dharams
-Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
+const example = `name,roll_no,class,guardian_name,guardian_contact,email,branch,transport
+Aarav Sharma,10B-02,10-B,Priya Sharma,+919812345342,priya@gmail.com,Jaipur Yad,yes
+Isha Patel,9A-03,9-A,Rakesh Patel,+919900011122,rakesh@gmail.com,Dharams,no
+Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad,yes`;
 
 function parseCsv(text: string): Row[] {
   const lines = text.trim().split(/\r?\n/).filter(Boolean);
@@ -43,9 +43,12 @@ function parseCsv(text: string): Row[] {
   const gContactIdx = getIndex(["contact", "phone", "mobile", "number"]);
   const emailIdx = getIndex(["email", "gmail"]);
   const branchIdx = getIndex(["branch", "campus"]);
+  const transportIdx = getIndex(["transport", "bus", "is_transport"]);
 
   return rest.map((line) => {
     const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((p) => p.replace(/^["']|["']$/g, '').trim());
+    const transportVal = transportIdx !== -1 ? (parts[transportIdx] ?? "") : "";
+    const transport = ["true", "yes", "y", "1"].includes(transportVal.toLowerCase().trim());
     return {
       name: nameIdx !== -1 ? (parts[nameIdx] ?? "") : "",
       roll_no: rollIdx !== -1 ? (parts[rollIdx] ?? "") : "",
@@ -54,6 +57,7 @@ function parseCsv(text: string): Row[] {
       guardian_contact: gContactIdx !== -1 ? (parts[gContactIdx] ?? "") : "",
       email: emailIdx !== -1 ? (parts[emailIdx] ?? "") : "",
       branch: branchIdx !== -1 ? (parts[branchIdx] ?? "Main") : "Main",
+      transport,
     };
   });
 }
@@ -89,6 +93,7 @@ function IngestStudents() {
   const [mClass, setMClass] = useState("");
   const [mGuardian, setMGuardian] = useState("");
   const [mPhone, setMPhone] = useState("");
+  const [mTransport, setMTransport] = useState(false);
   const [manualSuccess, setManualSuccess] = useState("");
   const [manualError, setManualError] = useState("");
 
@@ -159,11 +164,12 @@ function IngestStudents() {
         roll_no: r.roll_no,
         class: r.class,
         guardian_name: r.guardian_name,
-        guardian_contact: r.guardian_contact
+        guardian_contact: r.guardian_contact,
+        transport_flag: r.transport
       }));
 
     try {
-      const { error } = await supabase.from("students").insert(rowsToInsert);
+      const { error } = await supabase.from("students").upsert(rowsToInsert, { onConflict: "roll_no" });
       if (error) {
         setImportError(error.message);
       } else {
@@ -196,6 +202,7 @@ function IngestStudents() {
         class: mClass.trim(),
         guardian_name: mGuardian.trim() || null,
         guardian_contact: mPhone.trim() || null,
+        transport_flag: mTransport
       });
 
       if (error) {
@@ -203,6 +210,7 @@ function IngestStudents() {
       } else {
         setManualSuccess(`Student "${mName}" added successfully.`);
         setMName(""); setMRoll(""); setMClass(""); setMGuardian(""); setMPhone("");
+        setMTransport(false);
         loadData();
       }
     } catch (e: any) {
@@ -213,7 +221,14 @@ function IngestStudents() {
   // Assign Fee Operation
   async function handleAssignFeeSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedStudent || !feeTypeId || !dueDate) return;
+    const selectedFeeType = feeTypes.find((f) => f.id === feeTypeId);
+    const isTransportFee = selectedFeeType?.category === "transport" || selectedFeeType?.name?.toLowerCase().includes("transport");
+    if (isTransportFee && !selectedStudent.transport_flag) {
+      const confirmAssign = window.confirm(
+        `Warning: ${selectedStudent.name} is not marked as using school transport. Are you sure you want to assign the Transport Fee?`
+      );
+      if (!confirmAssign) return;
+    }
 
     try {
       const { error } = await supabase.from("fee_assignments").insert({
@@ -342,7 +357,12 @@ function IngestStudents() {
                 <tbody>
                   {students.map((s) => (
                     <tr key={s.student_id} className="border-t border-border/60">
-                      <td className="py-3.5 pr-4 font-medium text-white">{s.name}</td>
+                      <td className="py-3.5 pr-4 font-medium text-white">
+                        <div className="flex items-center gap-1.5">
+                          {s.name}
+                          {s.transport_flag && <span title="Uses School Transport">🚌</span>}
+                        </div>
+                      </td>
                       <td className="py-3.5 pr-4 font-mono text-xs text-muted-foreground">{s.class} · {s.roll_no}</td>
                       <td className="py-3.5 pr-4 font-mono text-xs text-muted-foreground">{s.guardian_name || "N/A"} ({s.guardian_contact || "N/A"})</td>
                       <td className="py-3.5 pr-4 font-mono text-sm">{inr(Number(s.balance || 0))}</td>
@@ -544,6 +564,19 @@ function IngestStudents() {
                     />
                   </div>
 
+                  <div className="flex items-center gap-2 py-1">
+                    <input
+                      type="checkbox"
+                      id="mTransport"
+                      checked={mTransport}
+                      onChange={(e) => setMTransport(e.target.checked)}
+                      className="rounded border-input bg-background"
+                    />
+                    <label htmlFor="mTransport" className="text-xs text-white font-medium cursor-pointer flex items-center gap-1">
+                      <span>🚌</span> Uses School Transport
+                    </label>
+                  </div>
+
                   {manualError && (
                     <div className="bg-[color:var(--alert)]/10 border border-[color:var(--alert)]/20 text-[color:var(--alert)] text-xs rounded p-2">
                       {manualError}
@@ -634,9 +667,9 @@ function IngestStudents() {
                             setScanning(false);
                             // Prepopulate with mock scanned results for hackathon demo
                             setConverterRows([
-                              { name: "Devendra Singh", roll_no: "10B-05", class: "10-B", guardian_name: "Gajendra Singh", guardian_contact: "+919876543210", email: "devendra@gmail.com", branch: "Jaipur" },
-                              { name: "Anjali Sharma", roll_no: "9A-04", class: "9-A", guardian_name: "Sunil Sharma", guardian_contact: "+919922883344", email: "anjali@yahoo.com", branch: "Dharamsala" },
-                              { name: "Rahul Verma", roll_no: "8C-12", class: "8-C", guardian_name: "Meena Verma", guardian_contact: "+919811223344", email: "rahul@gmail.com", branch: "Jaipur" }
+                              { name: "Devendra Singh", roll_no: "10B-05", class: "10-B", guardian_name: "Gajendra Singh", guardian_contact: "+919876543210", email: "devendra@gmail.com", branch: "Jaipur", transport: true },
+                              { name: "Anjali Sharma", roll_no: "9A-04", class: "9-A", guardian_name: "Sunil Sharma", guardian_contact: "+919922883344", email: "anjali@yahoo.com", branch: "Dharamsala", transport: false },
+                              { name: "Rahul Verma", roll_no: "8C-12", class: "8-C", guardian_name: "Meena Verma", guardian_contact: "+919811223344", email: "rahul@gmail.com", branch: "Jaipur", transport: true }
                             ]);
                           }, 2000);
                         }}
@@ -673,7 +706,7 @@ function IngestStudents() {
                     onClick={() => {
                       setConverterRows([
                         ...converterRows,
-                        { name: "", roll_no: "", class: "", guardian_name: "", guardian_contact: "", email: "", branch: "Main" }
+                        { name: "", roll_no: "", class: "", guardian_name: "", guardian_contact: "", email: "", branch: "Main", transport: false }
                       ]);
                     }}
                     className="border border-[color:var(--marigold)] text-[color:var(--marigold)] px-2.5 py-1 rounded text-xs font-semibold hover:bg-[color:var(--marigold)]/10"
@@ -693,6 +726,7 @@ function IngestStudents() {
                         <th className="pb-2">Contact</th>
                         <th className="pb-2">Email</th>
                         <th className="pb-2">Branch</th>
+                        <th className="pb-2 text-center">Transport</th>
                         <th className="pb-2 text-right">Action</th>
                       </tr>
                     </thead>
@@ -790,6 +824,18 @@ function IngestStudents() {
                               className="w-16 bg-[#0D0D10] border border-[#27272A] rounded p-1 text-[11px] text-white"
                             />
                           </td>
+                          <td className="py-2 pr-1 text-center">
+                            <input
+                              type="checkbox"
+                              checked={!!row.transport}
+                              onChange={(e) => {
+                                const newRows = [...converterRows];
+                                newRows[index].transport = e.target.checked;
+                                setConverterRows(newRows);
+                              }}
+                              className="rounded border-[#27272A] bg-[#0D0D10]"
+                            />
+                          </td>
                           <td className="py-2 text-right">
                             <button
                               type="button"
@@ -805,7 +851,7 @@ function IngestStudents() {
                       ))}
                       {converterRows.length === 0 && (
                         <tr>
-                          <td colSpan={8} className="py-8 text-center text-muted-foreground text-xs">
+                          <td colSpan={9} className="py-8 text-center text-muted-foreground text-xs">
                             Grid is empty. Upload a document and click "AI Scan", or click "+ Add Row" to begin.
                           </td>
                         </tr>
@@ -820,9 +866,9 @@ function IngestStudents() {
                       type="button"
                       onClick={() => {
                         // Generate CSV string
-                        const csvHeaders = "name,roll_no,class,guardian_name,guardian_contact,email,branch\n";
+                        const csvHeaders = "name,roll_no,class,guardian_name,guardian_contact,email,branch,transport\n";
                         const csvContent = converterRows
-                          .map((r) => `"${r.name}","${r.roll_no}","${r.class}","${r.guardian_name}","${r.guardian_contact}","${r.email}","${r.branch}"`)
+                          .map((r) => `"${r.name}","${r.roll_no}","${r.class}","${r.guardian_name}","${r.guardian_contact}","${r.email}","${r.branch}","${r.transport ? "yes" : "no"}"`)
                           .join("\n");
                         const blob = new Blob([csvHeaders + csvContent], { type: "text/csv;charset=utf-8;" });
                         const url = URL.createObjectURL(blob);
@@ -841,9 +887,9 @@ function IngestStudents() {
                     <button
                       type="button"
                       onClick={() => {
-                        const csvHeaders = "name,roll_no,class,guardian_name,guardian_contact,email,branch\n";
+                        const csvHeaders = "name,roll_no,class,guardian_name,guardian_contact,email,branch,transport\n";
                         const csvContent = converterRows
-                          .map((r) => `${r.name},${r.roll_no},${r.class},${r.guardian_name},${r.guardian_contact},${r.email},${r.branch}`)
+                          .map((r) => `${r.name},${r.roll_no},${r.class},${r.guardian_name},${r.guardian_contact},${r.email},${r.branch},${r.transport ? "yes" : "no"}`)
                           .join("\n");
                         setCsvText(csvHeaders + csvContent);
                         setActiveSubTab("import");
