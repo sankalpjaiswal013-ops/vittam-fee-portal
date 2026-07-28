@@ -399,7 +399,7 @@ function ClassesTab() {
                   <tbody>
                     {students.map((s) => (
                       <tr key={s.student_id} className="border-t border-[#1F2028]">
-                        <td className="py-3 px-5 text-white font-medium">{s.name}</td>
+                        <td className="py-3 px-5 text-foreground font-medium">{s.name}</td>
                         <td className="py-3 px-4 font-mono text-xs text-[#9CA3AF]">{s.roll_no}</td>
                         <td className="py-3 px-4 font-mono text-sm text-[#E8A33D]">{inr(Number(s.balance || 0))}</td>
                         <td className="py-3 px-4 text-xs text-[#6B7280]">{s.guardian_name || "—"}</td>
@@ -690,21 +690,34 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
     if (!confirm(`Are you sure you want to delete ${ids.length} selected student(s)? This will also remove their balance, fee records, and transactions.`)) return;
     setLoading(true);
     
-    // First delete transactions associated with these students to satisfy FK constraints
-    const { error: txnError } = await supabase.from("transactions").delete().in("student_id", ids);
-    if (txnError) {
-      alert(`Delete transactions failed: ${txnError.message}`);
-      setLoading(false);
-      return;
+    // Chunk size to prevent Request-URI Too Large / Bad Request errors (max 100 per query)
+    const chunkSize = 100;
+    
+    // Delete transactions in chunks
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const { error: txnError } = await supabase.from("transactions").delete().in("student_id", chunk);
+      if (txnError) {
+        alert(`Delete transactions failed: ${txnError.message}`);
+        setLoading(false);
+        return;
+      }
     }
 
-    const { error } = await supabase.from("students").delete().in("id", ids);
-    if (error) {
-      alert(`Delete failed: ${error.message}`);
-    } else {
-      alert(`✓ Successfully deleted ${ids.length} student(s).`);
-      load();
+    // Delete students in chunks
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const { error } = await supabase.from("students").delete().in("id", chunk);
+      if (error) {
+        alert(`Delete failed: ${error.message}`);
+        setLoading(false);
+        return;
+      }
     }
+
+    alert(`✓ Successfully deleted ${ids.length} student(s).`);
+    setSelectedIds(new Set());
+    load();
     setLoading(false);
   }
 
@@ -821,7 +834,7 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                             className="rounded"
                           />
                         </td>
-                        <td className="py-3.5 px-5 font-medium text-white">{s.name}</td>
+                        <td className="py-3.5 px-5 font-medium text-foreground">{s.name}</td>
                         <td className="py-3.5 px-5 font-mono text-xs text-[#9CA3AF]">{s.class} · {s.roll_no}</td>
                         <td className="py-3.5 px-5 text-xs text-[#6B7280]">{s.guardian_name || "—"}</td>
                         <td className="py-3.5 px-5 font-mono text-[#E8A33D]">{inr(Number(s.balance || 0))}</td>
@@ -1415,7 +1428,7 @@ function VerifyTab() {
                 </div>
                 <div className="mt-3 flex justify-between items-start">
                   <div>
-                    <p className="font-serif text-sm font-semibold text-white">{s.students?.name || "Student"}</p>
+                    <p className="font-serif text-sm font-semibold text-foreground">{s.students?.name || "Student"}</p>
                     <p className="font-mono text-[10px] text-[#6B7280] mt-0.5">{s.students?.roll_no} · {new Date(s.created_at).toLocaleDateString("en-IN")}</p>
                   </div>
                   <p className="font-mono text-sm font-bold text-[#E8A33D]">{inr(s.amount)}</p>
@@ -1435,7 +1448,7 @@ function VerifyTab() {
         <Modal onClose={() => { setSelected(null); setVerifier(""); }} wide>
           <div className="flex justify-between items-start">
             <div>
-              <p className="font-serif text-lg text-white">{selected.students?.name}</p>
+              <p className="font-serif text-lg text-foreground">{selected.students?.name}</p>
               <p className="font-mono text-xs text-[#6B7280]">Roll {selected.students?.roll_no} · Class {selected.students?.class}</p>
             </div>
             <p className="font-serif text-2xl text-[#E8A33D]">{inr(selected.amount)}</p>
@@ -1735,7 +1748,7 @@ function TransactionsTab() {
                 {filtered.map((t) => (
                   <tr key={t.id} className="border-t border-[#1F2028]">
                     <td className="py-3 px-5 font-mono text-xs text-[#6B7280]">{new Date(t.created_at).toLocaleDateString("en-IN")}</td>
-                    <td className="py-3 px-5 text-white">
+                    <td className="py-3 px-5 text-foreground">
                       {t.students?.name || "—"}{" "}
                       <span className="text-[#4B5563] font-mono text-[10px]">
                         ({t.students?.class ? `${t.students.class} · ` : ""}{t.students?.roll_no})
