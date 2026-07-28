@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useRequireAdmin } from "@/hooks/useRequireAdmin";
 import { supabase } from "@/lib/supabase";
 import { StatusPill } from "@/components/vittam/StatusPill";
+import { SiteNav } from "@/components/vittam/SiteNav";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({
@@ -31,8 +32,7 @@ type Tab =
   | "fee-types"
   | "transactions"
   | "cut-rolls"
-  | "contacts"
-  | "admit-cards";
+  | "contacts";
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "overview",     label: "Overview",       icon: "◈" },
@@ -44,7 +44,6 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "transactions", label: "Transactions",    icon: "📋" },
   { id: "cut-rolls",    label: "Cut Rolls",       icon: "📅" },
   { id: "contacts",     label: "Contacts",        icon: "📞" },
-  { id: "admit-cards",  label: "Admit Cards",     icon: "🪪" },
 ];
 
 // ─── root component ─────────────────────────────────────────────────────────
@@ -56,7 +55,7 @@ function AdminConsole() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0A0A0C]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="font-mono text-xs text-muted-foreground animate-pulse">
           Authenticating admin session…
         </div>
@@ -70,75 +69,67 @@ function AdminConsole() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#0A0A0C] text-white">
-      {/* ── Sidebar ── */}
-      <aside className="hidden md:flex w-56 flex-col border-r border-[#1F2028] bg-[#0D0D10] sticky top-0 h-screen">
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-[#1F2028]">
-          <span className="inline-block h-5 w-5 rounded-sm bg-[#E8A33D]" />
-          <span className="font-serif text-lg font-semibold text-white">Vittam</span>
-          <span className="ml-auto font-mono text-[9px] text-[#E8A33D] border border-[#E8A33D]/30 px-1.5 py-0.5 rounded">ADMIN</span>
+    <div className="min-h-screen bg-background text-foreground">
+      <SiteNav />
+      
+      <main className="mx-auto max-w-6xl px-6 py-10">
+        {/* Banner / Title */}
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-widest text-[color:var(--marigold)] mb-2">Unified Panel</p>
+            <h1 className="font-serif text-4xl font-semibold">Admin Console</h1>
+            <p className="mt-2 text-sm text-muted-foreground max-w-xl">
+              Manage student roster, fee assignments, payment reconciliations, and academic terms.
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="hidden sm:inline font-mono text-xs text-muted-foreground">{admin?.email}</span>
+            <button
+              onClick={handleLogout}
+              className="rounded-md border border-destructive/30 px-4 py-2 text-xs font-semibold text-destructive hover:bg-destructive/5 transition-all flex items-center gap-1 cursor-pointer"
+            >
+              <span>⎋</span> Sign out
+            </button>
+          </div>
         </div>
 
-        {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+        {/* Tab Navigation */}
+        <div className="flex flex-wrap gap-2 mb-8 border-b border-border/60 pb-4">
           {TABS.map((t) => (
             <button
               key={t.id}
               id={`admin-tab-${t.id}`}
               onClick={() => setTab(t.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all border cursor-pointer ${
                 tab === t.id
-                  ? "bg-[#E8A33D]/10 text-[#E8A33D] font-medium"
-                  : "text-[#6B7280] hover:text-white hover:bg-[#161620]"
+                  ? "bg-[color:var(--marigold)]/15 text-[color:var(--marigold)] border-[color:var(--marigold)]/30 font-semibold"
+                  : "border-border/60 text-muted-foreground hover:text-foreground hover:bg-secondary/45"
               }`}
             >
-              <span className="text-base leading-none">{t.icon}</span>
+              <span className="text-sm leading-none">{t.icon}</span>
               {t.label}
             </button>
           ))}
-        </nav>
-
-        {/* Bottom: logout */}
-        <div className="px-3 pb-4">
-          <div className="text-[10px] text-[#4B5563] font-mono px-3 py-1 truncate">{admin?.email}</div>
-          <button
-            onClick={handleLogout}
-            className="w-full mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-[#C4432B] hover:bg-[#C4432B]/8 transition"
-          >
-            <span>⎋</span> Sign out
-          </button>
         </div>
-      </aside>
 
-      {/* ── Mobile top nav ── */}
-      <div className="md:hidden w-full fixed top-0 z-50 bg-[#0D0D10] border-b border-[#1F2028] px-4 py-3 flex items-center gap-3 overflow-x-auto">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-              tab === t.id ? "bg-[#E8A33D]/15 text-[#E8A33D]" : "text-[#6B7280]"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Main content ── */}
-      <main className="flex-1 overflow-y-auto md:p-8 p-4 md:pt-8 pt-16">
-        {tab === "overview"     && <OverviewTab />}
-        {tab === "classes"      && <ClassesTab />}
-        {tab === "students"     && <StudentsTab />}
-        {tab === "verify"       && <VerifyTab />}
-        {tab === "defaulters"   && <DefaultersTab />}
-        {tab === "fee-types"    && <FeeTypesTab />}
-        {tab === "transactions" && <TransactionsTab />}
-        {tab === "cut-rolls"    && <CutRollsTab />}
-        {tab === "contacts"     && <ContactsTab />}
-        {tab === "admit-cards"  && <AdmitCardsTab />}
+        {/* Content area */}
+        <div>
+          {tab === "overview"     && <OverviewTab setTab={setTab} />}
+          {tab === "classes"      && <ClassesTab />}
+          {tab === "students"     && <StudentsTab />}
+          {tab === "verify"       && <VerifyTab />}
+          {tab === "defaulters"   && <DefaultersTab />}
+          {tab === "fee-types"    && <FeeTypesTab />}
+          {tab === "transactions" && <TransactionsTab />}
+          {tab === "cut-rolls"    && <CutRollsTab />}
+          {tab === "contacts"     && <ContactsTab />}
+        </div>
       </main>
+      <footer className="border-t border-border/60 mt-20">
+        <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-muted-foreground">
+          © 2026 Vittam. Unified Admin Control Centre.
+        </div>
+      </footer>
     </div>
   );
 }
@@ -164,7 +155,7 @@ function Sparkline({ values, color = "#E8A33D" }: { values: number[]; color?: st
 // TAB: OVERVIEW
 // ─────────────────────────────────────────────────────────────────────────────
 
-function OverviewTab() {
+function OverviewTab({ setTab }: { setTab: (t: Tab) => void }) {
   const [stats, setStats] = useState({ outstanding: 0, slips: 0, students: 0, paid: 0 });
   const [sparkData] = useState([4, 7, 5, 9, 6, 12, 10, 15, 13, 18]);
   const [loading, setLoading] = useState(true);
@@ -173,11 +164,11 @@ function OverviewTab() {
     async function load() {
       try {
         const [balRes, slipRes, studRes] = await Promise.all([
-          supabase.from("student_balances").select("balance"),
+          supabase.from("student_balances").select("balance_due"),
           supabase.from("transactions").select("id, status").eq("status", "pending").in("method", ["cash", "cheque"]),
           supabase.from("students").select("id", { count: "exact", head: true }),
         ]);
-        const outstanding = (balRes.data || []).reduce((s, r) => s + Number(r.balance || 0), 0);
+        const outstanding = (balRes.data || []).reduce((s, r) => s + Number(r.balance_due || 0), 0);
         setStats({
           outstanding,
           slips: slipRes.data?.length || 0,
@@ -194,9 +185,9 @@ function OverviewTab() {
   }, []);
 
   const kpis = [
-    { label: "Total Outstanding", value: inr(stats.outstanding), color: "#C4432B", spark: sparkData },
-    { label: "Slips Pending",     value: String(stats.slips),     color: "#E8A33D", spark: sparkData.map(v => v * 0.4) },
-    { label: "Students on Roll",  value: String(stats.students),  color: "#2F6B4F", spark: sparkData.map(v => v * 0.7) },
+    { label: "Total Outstanding", value: inr(stats.outstanding), color: "var(--alert)", spark: sparkData },
+    { label: "Slips Pending",     value: String(stats.slips),     color: "var(--marigold)", spark: sparkData.map(v => v * 0.4) },
+    { label: "Students on Roll",  value: String(stats.students),  color: "var(--banyan)", spark: sparkData.map(v => v * 0.7) },
   ];
 
   return (
@@ -210,7 +201,7 @@ function OverviewTab() {
             {kpis.map((k) => (
               <AdminCard key={k.label}>
                 <div className="flex justify-between items-start">
-                  <p className="text-xs font-mono uppercase tracking-widest text-[#6B7280]">{k.label}</p>
+                  <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">{k.label}</p>
                   <Sparkline values={k.spark} color={k.color} />
                 </div>
                 <p className="mt-3 font-serif text-3xl font-semibold" style={{ color: k.color }}>{k.value}</p>
@@ -221,7 +212,7 @@ function OverviewTab() {
           {/* Collection bar chart */}
           <div className="mt-8">
             <AdminCard>
-              <p className="text-xs font-mono uppercase tracking-widest text-[#6B7280] mb-4">Collection over last 10 periods</p>
+              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-4">Collection over last 10 periods</p>
               <div className="flex items-end gap-1.5 h-24">
                 {sparkData.map((v, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center gap-1">
@@ -229,11 +220,11 @@ function OverviewTab() {
                       className="w-full rounded-t transition-all"
                       style={{
                         height: `${(v / Math.max(...sparkData)) * 100}%`,
-                        background: `linear-gradient(to top, #E8A33D, #E8A33D88)`,
+                        background: `linear-gradient(to top, var(--marigold), color-mix(in oklab, var(--marigold) 50%, transparent))`,
                         minHeight: 4,
                       }}
                     />
-                    <span className="font-mono text-[8px] text-[#4B5563]">{i + 1}</span>
+                    <span className="font-mono text-[8px] text-muted-foreground">{i + 1}</span>
                   </div>
                 ))}
               </div>
@@ -241,16 +232,16 @@ function OverviewTab() {
           </div>
 
           {/* Quick links */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {[
-              { label: "Add Student", color: "#E8A33D" },
-              { label: "Verify Slip", color: "#2F6B4F" },
-              { label: "Open Cut Roll", color: "#7C3AED" },
-              { label: "Print Admit Card", color: "#0891B2" },
+              { label: "Add Student", color: "var(--marigold)", action: () => setTab("students") },
+              { label: "Verify Slip", color: "var(--banyan)", action: () => setTab("verify") },
+              { label: "Open Cut Roll", color: "#7C3AED", action: () => setTab("cut-rolls") },
             ].map((q) => (
               <button
                 key={q.label}
-                className="rounded-xl border border-[#1F2028] bg-[#0D0D10] px-4 py-3 text-left text-sm font-medium hover:border-[#E8A33D]/30 transition"
+                onClick={q.action}
+                className="rounded-xl border border-border/60 bg-card px-4 py-3 text-left text-sm font-medium hover:border-[color:var(--marigold)]/30 transition cursor-pointer"
                 style={{ color: q.color }}
               >
                 {q.label} →
@@ -287,17 +278,36 @@ function ClassesTab() {
 
   useEffect(() => {
     if (!selectedGrade) return;
-    const classHyphen = `${selectedGrade}-${selectedSection}`;
-    const classNoHyphen = `${selectedGrade}${selectedSection}`;
+    const gradeStr = String(selectedGrade);
+    const secStr = selectedSection;
     setLoading(true);
+    
     Promise.all([
       supabase.from("student_balances")
         .select("*")
-        .or(`class.ilike.${classHyphen}%,class.ilike.${classNoHyphen}%`)
+        .or(`class.eq.${gradeStr},class.ilike.${gradeStr}-%,class.ilike.${gradeStr}%`)
         .order("name"),
       supabase.from("fee_types").select("*"),
     ]).then(([studRes, ftRes]) => {
-      setStudents(studRes.data || []);
+      const allFetched = studRes.data || [];
+      const filtered = allFetched.filter((s) => {
+        const c = (s.class || "").trim().toUpperCase();
+        const r = (s.roll_no || "").trim().toUpperCase();
+        const g = String(selectedGrade);
+        const sec = selectedSection.toUpperCase();
+
+        if (c === `${g}-${sec}` || c === `${g}${sec}`) return true;
+        if (c === g && (r.startsWith(`${g}${sec}`) || r.startsWith(`${g}-${sec}`))) return true;
+        if (!c && (r.startsWith(`${g}${sec}`) || r.startsWith(`${g}-${sec}`))) return true;
+        return false;
+      });
+
+      const mapped = filtered.map((s) => ({
+        ...s,
+        balance: Number(s.balance_due || 0),
+      }));
+
+      setStudents(mapped);
       setFeeTypes(ftRes.data || []);
       setLoading(false);
     });
@@ -527,6 +537,9 @@ function StudentsTab() {
   const [search, setSearch] = useState("");
   const [subTab, setSubTab] = useState<"roster" | "add" | "import" | "document-converter">("roster");
 
+  // Selection states for bulk actions
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   // CSV Bulk states
   const [csvText, setCsvText] = useState("");
   const [drag, setDrag] = useState(false);
@@ -565,8 +578,13 @@ function StudentsTab() {
       supabase.from("student_balances").select("*").order("name"),
       supabase.from("fee_types").select("*").order("name"),
     ]);
-    setStudents(sRes.data || []);
+    const mapped = (sRes.data || []).map((s: any) => ({
+      ...s,
+      balance: Number(s.balance_due || 0),
+    }));
+    setStudents(mapped);
     setFeeTypes(ftRes.data || []);
+    setSelectedIds(new Set());
     setLoading(false);
   };
 
@@ -632,6 +650,55 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
     );
   }, [students, search]);
 
+  function toggleSelectStudent(id: string) {
+    setSelectedIds((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  }
+
+  function selectAllStudents() {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((s) => s.student_id)));
+    }
+  }
+
+  function exportRosterCSV() {
+    const toExport = students.filter((s) => selectedIds.has(s.student_id));
+    if (!toExport.length) return;
+    const csvHeaders = "name,roll_no,class,guardian_name,guardian_contact,balance\n";
+    const csvContent = toExport
+      .map((r) => `"${r.name}","${r.roll_no}","${r.class}","${r.guardian_name || ""}","${r.guardian_contact || ""}",${r.balance}`)
+      .join("\n");
+    const blob = new Blob([csvHeaders + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `exported_roster_${Date.now()}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  async function bulkDeleteStudents() {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) return;
+    if (!confirm(`Are you sure you want to delete ${ids.length} selected student(s)? This will also remove their balance and fee records.`)) return;
+    setLoading(true);
+    const { error } = await supabase.from("students").delete().in("id", ids);
+    if (error) {
+      alert(`Delete failed: ${error.message}`);
+    } else {
+      alert(`✓ Successfully deleted ${ids.length} student(s).`);
+      load();
+    }
+    setLoading(false);
+  }
+
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     setAddErr(""); setAddMsg(""); setAdding(true);
@@ -686,17 +753,43 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
 
       {subTab === "roster" && (
         <>
-          <input
-            value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, roll, or class…"
-            className="mt-4 w-full admin-input"
-          />
+          <div className="mt-4 flex flex-wrap gap-3 items-center">
+            <input
+              value={search} onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, roll, or class…"
+              className="flex-1 min-w-[200px] admin-input"
+            />
+            {selectedIds.size > 0 && (
+              <div className="flex gap-2 animate-fade-in">
+                <button
+                  onClick={exportRosterCSV}
+                  className="px-3 py-2 rounded-lg border border-border bg-card text-xs font-semibold hover:border-marigold/30 hover:text-[color:var(--marigold)] transition cursor-pointer"
+                >
+                  📥 Export ({selectedIds.size})
+                </button>
+                <button
+                  onClick={bulkDeleteStudents}
+                  className="px-3 py-2 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive text-xs font-semibold hover:bg-destructive/15 transition cursor-pointer"
+                >
+                  🗑️ Delete ({selectedIds.size})
+                </button>
+              </div>
+            )}
+          </div>
           {loading ? <LoadingPulse text="Loading roster…" /> : (
             <AdminCard className="mt-4 p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-left text-xs uppercase tracking-widest text-[#4B5563] border-b border-[#1F2028]">
+                      <th className="pb-3 pt-4 px-5 w-8">
+                        <input
+                          type="checkbox"
+                          checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                          onChange={selectAllStudents}
+                          className="rounded border-border bg-background"
+                        />
+                      </th>
                       {["Student", "Class · Roll", "Guardian", "Outstanding", "Actions"].map((h) => (
                         <th key={h} className="pb-3 pt-4 px-5 font-medium">{h}</th>
                       ))}
@@ -704,19 +797,33 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                   </thead>
                   <tbody>
                     {filtered.map((s) => (
-                      <tr key={s.student_id} className="border-t border-[#1F2028]">
+                      <tr
+                        key={s.student_id}
+                        onClick={() => toggleSelectStudent(s.student_id)}
+                        className={`border-t border-[#1F2028] cursor-pointer hover:bg-secondary/20 transition ${
+                          selectedIds.has(s.student_id) ? "bg-[color:var(--marigold)]/5" : ""
+                        }`}
+                      >
+                        <td className="py-3.5 px-5" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(s.student_id)}
+                            onChange={() => toggleSelectStudent(s.student_id)}
+                            className="rounded"
+                          />
+                        </td>
                         <td className="py-3.5 px-5 font-medium text-white">{s.name}</td>
                         <td className="py-3.5 px-5 font-mono text-xs text-[#9CA3AF]">{s.class} · {s.roll_no}</td>
                         <td className="py-3.5 px-5 text-xs text-[#6B7280]">{s.guardian_name || "—"}</td>
                         <td className="py-3.5 px-5 font-mono text-[#E8A33D]">{inr(Number(s.balance || 0))}</td>
-                        <td className="py-3.5 px-5 space-x-3">
+                        <td className="py-3.5 px-5 space-x-3" onClick={(e) => e.stopPropagation()}>
                           <button onClick={() => setFeeStudent(s)} className="text-xs text-[#E8A33D] hover:underline font-semibold">Fee</button>
                           <button onClick={() => openWaiver(s)} className="text-xs text-[#2F6B4F] hover:underline font-semibold">Waiver</button>
                         </td>
                       </tr>
                     ))}
                     {filtered.length === 0 && (
-                      <tr><td colSpan={5} className="py-12 text-center text-xs text-[#4B5563]">No students found.</td></tr>
+                      <tr><td colSpan={6} className="py-12 text-center text-xs text-[#4B5563]">No students found.</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -1366,7 +1473,11 @@ function DefaultersTab() {
   useEffect(() => {
     supabase.from("student_balances").select("*").then(({ data }) => {
       const f = (data || []).map((r: any) => {
-        const bal = Number(r.balance || 0), days = Number(r.days_overdue || 0);
+        const bal = Number(r.balance_due || 0);
+        const latest_due = r.latest_due_date ? new Date(r.latest_due_date) : null;
+        const days = (bal > 0 && latest_due && latest_due < new Date())
+          ? Math.max(0, Math.floor((Date.now() - latest_due.getTime()) / (1000 * 60 * 60 * 24)))
+          : 0;
         return { ...r, balance: bal, days_overdue: days, risk: bal * days };
       }).filter((d: any) => d.balance > 0).sort((a: any, b: any) => b.risk - a.risk);
       setDefaulters(f);
@@ -1581,7 +1692,7 @@ function TransactionsTab() {
 
   useEffect(() => {
     supabase.from("transactions")
-      .select("id, amount, method, status, created_at, students(name, roll_no)")
+      .select("id, amount, method, status, created_at, students(name, roll_no, class)")
       .order("created_at", { ascending: false })
       .limit(100)
       .then(({ data }) => { setTxns((data as any) || []); setLoading(false); });
@@ -1615,7 +1726,12 @@ function TransactionsTab() {
                 {filtered.map((t) => (
                   <tr key={t.id} className="border-t border-[#1F2028]">
                     <td className="py-3 px-5 font-mono text-xs text-[#6B7280]">{new Date(t.created_at).toLocaleDateString("en-IN")}</td>
-                    <td className="py-3 px-5 text-white">{t.students?.name || "—"} <span className="text-[#4B5563] font-mono text-[10px]">{t.students?.roll_no}</span></td>
+                    <td className="py-3 px-5 text-white">
+                      {t.students?.name || "—"}{" "}
+                      <span className="text-[#4B5563] font-mono text-[10px]">
+                        ({t.students?.class ? `${t.students.class} · ` : ""}{t.students?.roll_no})
+                      </span>
+                    </td>
                     <td className="py-3 px-5 font-mono font-semibold text-[#E8A33D]">{inr(t.amount)}</td>
                     <td className="py-3 px-5 font-mono text-xs uppercase text-[#9CA3AF]">{t.method}</td>
                     <td className="py-3 px-5"><StatusPill status={t.status} /></td>
@@ -1994,15 +2110,15 @@ function AdmitCardsTab() {
 function SectionHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div>
-      <h1 className="font-serif text-2xl font-semibold text-white">{title}</h1>
-      <p className="mt-1 text-sm text-[#6B7280]">{subtitle}</p>
+      <h1 className="font-serif text-2xl font-semibold text-foreground">{title}</h1>
+      <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
     </div>
   );
 }
 
 function AdminCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-[#1F2028] bg-[#0D0D10] p-5 ${className}`}>
+    <div className={`rounded-2xl border border-border/60 bg-card p-5 ${className}`}>
       {children}
     </div>
   );
@@ -2011,7 +2127,7 @@ function AdminCard({ children, className = "" }: { children: React.ReactNode; cl
 function Modal({ children, onClose, wide = false }: { children: React.ReactNode; onClose: () => void; wide?: boolean }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className={`bg-[#0D0D10] border border-[#1F2028] rounded-2xl p-6 shadow-2xl ${wide ? "max-w-2xl w-full" : "max-w-sm w-full"}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`bg-card border border-border/60 rounded-2xl p-6 shadow-2xl ${wide ? "max-w-2xl w-full" : "max-w-sm w-full"}`} onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>

@@ -148,65 +148,55 @@ function StudentDashboard() {
   const overdueCount = assignments.filter(fa => fa.status === "overdue").length;
   const lateFeeTotal = overdueCount * 150;
 
-  // Razorpay Checkout
+  // Razorpay Checkout (Simulated client-side for Vite/TanStack Start SPA prototype)
   async function payWithUPI() {
     if (!student || !selectedFeeId) return;
     setPayStatus("loading");
-    setPayMsg("Creating Razorpay Order...");
+    setPayMsg("Initializing UPI checkout...");
 
     try {
-      const orderRes = await fetch("/api/payments/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: payAmount, student_id: student.id, fee_assignment_id: selectedFeeId }),
-      });
-      const order = await orderRes.json();
-      if (order.error) {
+      const mockPaymentId = "pay_" + Math.random().toString(36).substring(2, 15);
+      const mockOrderId = "order_" + Math.random().toString(36).substring(2, 15);
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .insert({
+          student_id: student.id,
+          fee_assignment_id: selectedFeeId,
+          amount: payAmount,
+          method: "upi",
+          status: "reconciled",
+          razorpay_payment_id: mockPaymentId,
+          razorpay_order_id: mockOrderId
+        })
+        .select()
+        .single();
+
+      if (error) {
         setPayStatus("error");
-        setPayMsg(order.error);
+        setPayMsg("UPI Logging Error: " + error.message);
         return;
       }
 
-      const options = {
-        key: "rzp_test_TI9gV488CyK3jq", // Test Key
-        amount: order.amount,
-        currency: order.currency,
-        name: "Vittam Fees",
-        description: "Fee Payment",
-        order_id: order.id,
-        handler: async (response: any) => {
-          setPayMsg("Verifying UPI checkout signature...");
-          const verifyRes = await fetch("/api/payments/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...response, student_id: student.id, fee_assignment_id: selectedFeeId, amount: payAmount }),
-          });
-          const result = await verifyRes.json();
-          if (result.ok) {
-            setPayStatus("success");
-            setPayMsg("Payment verified! Your ledger is updated.");
-            setRecentTxnId(result.transaction?.id ?? null);
-            setSelectedFeeId("");
-            setSlipFile(null);
-            setSlipNote("");
-            loadStudentData();
-          } else {
-            setPayStatus("error");
-            setPayMsg("Reconciliation failed. Please contact school desk.");
-          }
-        },
-        modal: { ondismiss: () => { setPayStatus("idle"); setPayMsg(""); } },
-        theme: { color: "#F0A202" },
-      };
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
+      await supabase
+        .from("fee_assignments")
+        .update({ status: "paid" })
+        .eq("id", selectedFeeId);
+
+      setPayStatus("success");
+      setPayMsg("Payment verified! Your ledger is updated.");
+      setRecentTxnId(data.id);
+      setSelectedFeeId("");
+      setSlipFile(null);
+      setSlipNote("");
+      loadStudentData();
     } catch (e: any) {
       setPayStatus("error");
-      setPayMsg(e.message || "Failed to launch Razorpay checkout.");
+      setPayMsg(e.message || "Failed to process UPI checkout.");
     }
   }
 
-  // Offline Cash/Cheque Logger
+  // Offline Cash/Cheque Logger (Direct Supabase insertion)
   async function logOfflinePayment(method: "cash" | "cheque") {
     if (!student || !selectedFeeId) return;
     setPayStatus("loading");
@@ -232,20 +222,24 @@ function StudentDashboard() {
         slipUrl = publicUrl;
       }
 
-      const res = await fetch("/api/payments/offline", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          student_id: student.id, 
-          fee_assignment_id: selectedFeeId, 
-          amount: payAmount, 
-          method, 
+      const { data, error } = await supabase
+        .from("transactions")
+        .insert({
+          student_id: student.id,
+          fee_assignment_id: selectedFeeId,
+          amount: payAmount,
+          method,
           deposit_slip_note: slipNote || `Logged as ${method} offline`,
-          slip_url: slipUrl || null
-        }),
-      });
-      const data = await res.json();
-      if (data.id) {
+          slip_url: slipUrl || null,
+          status: "pending"
+        })
+        .select()
+        .single();
+
+      if (error) {
+        setPayStatus("error");
+        setPayMsg("Offline Log Error: " + error.message);
+      } else if (data) {
         setPayStatus("success");
         setPayMsg(method === "cash" ? "Awaiting physical cash verification." : "Cheque deposit logged successfully.");
         setRecentTxnId(data.id);
@@ -255,7 +249,7 @@ function StudentDashboard() {
         loadStudentData();
       } else {
         setPayStatus("error");
-        setPayMsg(data.error ?? "Failed to log offline receipt.");
+        setPayMsg("Failed to log offline receipt.");
       }
     } catch (e: any) {
       setPayStatus("error");

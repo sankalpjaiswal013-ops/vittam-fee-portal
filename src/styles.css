@@ -168,25 +168,25 @@
 @utility admin-input {
   width: 100%;
   border-radius: 0.5rem;
-  border: 1px solid #1F2028;
-  background: #06060A;
-  color: white;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
   padding: 0.5rem 0.75rem;
   font-size: 0.75rem;
   transition: border-color 0.15s;
 
   &:focus {
     outline: none;
-    border-color: #E8A33D;
+    border-color: var(--marigold);
   }
 
   &::placeholder {
-    color: #4B5563;
+    color: var(--muted-foreground);
   }
 
   option {
-    background: #0D0D10;
-    color: white;
+    background: var(--card);
+    color: var(--foreground);
   }
 }
 
@@ -195,8 +195,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 0.5rem;
-  background: #E8A33D;
-  color: #1a130a;
+  background: var(--marigold);
+  color: var(--primary-foreground);
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.5rem 1rem;
@@ -217,16 +217,16 @@
   align-items: center;
   justify-content: center;
   border-radius: 0.5rem;
-  border: 1px solid #1F2028;
-  color: #9CA3AF;
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
   font-size: 0.75rem;
   font-weight: 500;
   padding: 0.5rem 1rem;
   transition: border-color 0.15s, color 0.15s;
 
   &:hover {
-    border-color: #374151;
-    color: white;
+    border-color: var(--border);
+    color: var(--foreground);
   }
 }
 
