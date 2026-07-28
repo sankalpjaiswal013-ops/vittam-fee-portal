@@ -1,6 +1,5 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
-import Script from "next/script"; // Wait, in Vite, we can just use normal scripts or load it dynamically
 import { SiteNav } from "@/components/vittam/SiteNav";
 import { ReceiptCard } from "@/components/vittam/ReceiptCard";
 import { StatusPill, MethodPill } from "@/components/vittam/StatusPill";
@@ -41,6 +40,130 @@ function inr(val: number) {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(val);
 }
 
+// English and Hindi Translations for Bilingual Parent View
+const translations = {
+  en: {
+    titleStudent: "🎓 Student Ledger & Spending",
+    titleParent: "👨‍👩‍👧 Parent Fee Portal",
+    studentMode: "student mode",
+    parentMode: "parent mode",
+    studentViewBtn: "🎓 Student View",
+    parentViewBtn: "👨‍👩‍👧 Parent View",
+    descStudent: "Track your past spending, upcoming deadlines, late fees, and receipt history.",
+    descParent: "Review and settle your child's outstanding school fee invoices.",
+    totalBilled: "Total Spent So Far",
+    totalBilledDesc: "Across {count} settled receipts",
+    outstanding: "Outstanding Balance",
+    outstandingDesc: "{count} active invoice(s)",
+    lateFees: "Late Fees Applied",
+    lateFeesDesc: "{count} overdue invoice(s)",
+    noLateFeesDesc: "No overdue penalties",
+    deadline: "Upcoming Deadline",
+    noDeadline: "No pending dues",
+    deadlineDesc: "Next installment cut-off",
+    deadlinesTitle: "📅 Upcoming Deadlines & Relevant Dates",
+    noDeadlines: "No fee assignments found for your account.",
+    scholarshipApplied: "✓ Scholarship Discount Applied ({pct}% Off)",
+    dueDate: "Due Date",
+    statusIndicator: "Status Indicator",
+    cleared: "Cleared",
+    overdue: "Overdue",
+    daysLeft: "{count} days left",
+    payDue: "Pay Due Invoice",
+    chooseInvoice: "-- Choose an Invoice --",
+    payNow: "Pay {amt} Now",
+    launchingGateway: "Launching Gateway...",
+    logCash: "Log Cash",
+    logCheque: "Log Cheque",
+    depositSlip: "Deposit slip photo",
+    slipRef: "Transaction ID / Slip reference",
+    paymentRecorded: "✓ Payment Recorded",
+    viewReceipt: "View Receipt",
+    settled: "✓ All school invoices are settled!",
+    pastTxns: "💳 Past Transactions & Spending",
+    pastTxnsDesc: "Complete history of all paid & pending receipts",
+    records: "{count} records",
+    tblDate: "Date",
+    tblMethod: "Method",
+    tblAmount: "Amount Spent",
+    tblStatus: "Status",
+    tblReceipt: "Receipt",
+    viewPdfReceipt: "View PDF Receipt",
+    noTxns: "No transactions recorded yet.",
+    logout: "Log out",
+    loadingText: "Loading student ledger data...",
+    officialReceipt: "Vittam Official Receipt",
+    txnHash: "TXN #{hash}",
+    studentName: "Student Name",
+    classRoll: "Class · Roll No",
+    paymentDate: "Payment Date",
+    paymentMethod: "Payment Method",
+    spentReceived: "Amount Spent / Received",
+    printPdf: "Print PDF",
+    close: "Close"
+  },
+  hi: {
+    titleStudent: "🎓 छात्र खाता और खर्च",
+    titleParent: "👨‍👩‍👧 अभिभावक शुल्क पोर्टल",
+    studentMode: "छात्र मोड",
+    parentMode: "अभिभावक मोड",
+    studentViewBtn: "🎓 छात्र देखें",
+    parentViewBtn: "👨‍👩‍👧 अभिभावक देखें",
+    descStudent: "अपने पिछले खर्च, आगामी समय सीमा, विलंब शुल्क और रसीद इतिहास को ट्रैक करें।",
+    descParent: "अपने बच्चे के बकाया स्कूल शुल्क चालान की समीक्षा करें और भुगतान करें।",
+    totalBilled: "अब तक कुल खर्च",
+    totalBilledDesc: "{count} भुगतान किए गए रसीदों में",
+    outstanding: "बकाया राशि",
+    outstandingDesc: "{count} सक्रिय चालान",
+    lateFees: "विलंब शुल्क लागू",
+    lateFeesDesc: "{count} विलंबित चालान",
+    noLateFeesDesc: "कोई विलंब शुल्क दंड नहीं",
+    deadline: "आगामी समय सीमा",
+    noDeadline: "कोई बकाया नहीं",
+    deadlineDesc: "अगली किस्त की अंतिम तिथि",
+    deadlinesTitle: "📅 आगामी समय सीमा और महत्वपूर्ण तिथियां",
+    noDeadlines: "आपके खाते के लिए कोई शुल्क आवंटन नहीं मिला।",
+    scholarshipApplied: "✓ छात्रवृत्ति छूट लागू की गई ({pct}% छूट)",
+    dueDate: "देय तिथि",
+    statusIndicator: "स्थिति संकेतक",
+    cleared: "भुगतान हो गया",
+    overdue: "विलंबित",
+    daysLeft: "{count} दिन शेष",
+    payDue: "बकाया शुल्क का भुगतान करें",
+    chooseInvoice: "-- चालान चुनें --",
+    payNow: "अभी {amt} भुगतान करें",
+    launchingGateway: "गेटवे शुरू हो रहा है...",
+    logCash: "नकद दर्ज करें",
+    logCheque: "चेक दर्ज करें",
+    depositSlip: "जमा पर्ची की फोटो",
+    slipRef: "लेनदेन आईडी / पर्ची संदर्भ",
+    paymentRecorded: "✓ भुगतान दर्ज किया गया",
+    viewReceipt: "रसीद देखें",
+    settled: "✓ सभी स्कूल चालान सुलझा लिए गए हैं!",
+    pastTxns: "💳 पिछला लेनदेन और खर्च",
+    pastTxnsDesc: "सभी भुगतान किए गए और लंबित रसीदों का इतिहास",
+    records: "{count} रिकॉर्ड",
+    tblDate: "तिथि",
+    tblMethod: "विधि",
+    tblAmount: "खर्च की गई राशि",
+    tblStatus: "स्थिति",
+    tblReceipt: "रसीद",
+    viewPdfReceipt: "PDF रसीद देखें",
+    noTxns: "अभी तक कोई लेनदेन दर्ज नहीं किया गया है।",
+    logout: "लॉग आउट",
+    loadingText: "छात्र बहीखाता डेटा लोड हो रहा है...",
+    officialReceipt: "वित्तम आधिकारिक रसीद",
+    txnHash: "लेनदेन #{hash}",
+    studentName: "छात्र का नाम",
+    classRoll: "कक्षा · रोल नंबर",
+    paymentDate: "भुगतान की तिथि",
+    paymentMethod: "भुगतान विधि",
+    spentReceived: "खर्च / प्राप्त राशि",
+    printPdf: "PDF प्रिंट करें",
+    close: "बंद करें"
+  }
+};
+
 function StudentDashboard() {
   const [student, setStudent] = useState<StudentSession | null>(null);
   const [assignments, setAssignments] = useState<FeeAssignment[]>([]);
@@ -48,6 +171,7 @@ function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [receipt, setReceipt] = useState<Transaction | null>(null);
   const [viewMode, setViewMode] = useState<"student" | "parent">("student");
+  const [lang, setLang] = useState<"en" | "hi">("en");
 
   // Payment states
   const [selectedFeeId, setSelectedFeeId] = useState("");
@@ -59,6 +183,8 @@ function StudentDashboard() {
   const [recentTxnId, setRecentTxnId] = useState<string | null>(null);
 
   const nav = useNavigate();
+
+  const t = (key: keyof typeof translations.en) => translations[lang][key];
 
   // Load Razorpay Script dynamically for Vite
   useEffect(() => {
@@ -181,7 +307,7 @@ function StudentDashboard() {
       }
 
       setPayStatus("success");
-      setPayMsg("UPI payment initiated. Awaiting admin verification.");
+      setPayMsg(lang === "hi" ? "UPI भुगतान शुरू किया गया। व्यवस्थापक सत्यापन की प्रतीक्षा है।" : "UPI payment initiated. Awaiting admin verification.");
       setRecentTxnId(data.id);
       setSelectedFeeId("");
       setSlipFile(null);
@@ -238,7 +364,10 @@ function StudentDashboard() {
         setPayMsg("Offline Log Error: " + error.message);
       } else if (data) {
         setPayStatus("success");
-        setPayMsg(method === "cash" ? "Awaiting physical cash verification." : "Cheque deposit logged successfully.");
+        setPayMsg(method === "cash"
+          ? (lang === "hi" ? "भौतिक नकद सत्यापन की प्रतीक्षा है।" : "Awaiting physical cash verification.")
+          : (lang === "hi" ? "चेक जमा सफलतापूर्वक दर्ज किया गया।" : "Cheque deposit logged successfully.")
+        );
         setRecentTxnId(data.id);
         setSelectedFeeId("");
         setSlipFile(null);
@@ -264,7 +393,7 @@ function StudentDashboard() {
       <div className="min-h-screen">
         <SiteNav />
         <main className="mx-auto max-w-6xl px-6 py-20 text-center font-mono text-sm text-muted-foreground animate-pulse">
-          Loading student ledger data...
+          {t("loadingText")}
         </main>
       </div>
     );
@@ -280,29 +409,46 @@ function StudentDashboard() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="font-serif text-3xl font-semibold">
-                {viewMode === "student" ? "🎓 Student Ledger & Spending" : "👨‍👩‍👧 Parent Fee Portal"}
+                {viewMode === "student" ? t("titleStudent") : t("titleParent")}
               </h1>
               <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-[color:var(--marigold)]/10 text-[color:var(--marigold)] border border-[color:var(--marigold)]/30 uppercase tracking-widest font-mono">
-                {viewMode} mode
+                {viewMode === "student" ? t("studentMode") : t("parentMode")}
               </span>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              {viewMode === "student" 
-                ? "Track your past spending, upcoming deadlines, late fees, and receipt history."
-                : "Manage fee payments, view official receipts, and monitor outstanding dues."}
+              {viewMode === "student" ? t("descStudent") : t("descParent")}
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* View Mode Selector Button */}
-            <div className="flex bg-secondary/80 rounded-lg p-1 border border-border">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Bilingual Switcher */}
+            <div className="flex bg-secondary/30 rounded-lg p-1 border border-border/40 gap-1">
+              <button
+                onClick={() => setLang("en")}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
+                  lang === "en" ? "bg-[color:var(--marigold)] text-[#1a130a]" : "text-muted-foreground hover:text-white"
+                }`}
+              >
+                English
+              </button>
+              <button
+                onClick={() => setLang("hi")}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
+                  lang === "hi" ? "bg-[color:var(--marigold)] text-[#1a130a]" : "text-muted-foreground hover:text-white"
+                }`}
+              >
+                हिंदी (Hindi)
+              </button>
+            </div>
+
+            <div className="flex bg-secondary/30 rounded-lg p-1 border border-border/40 gap-1">
               <button
                 onClick={() => setViewMode("student")}
                 className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
                   viewMode === "student" ? "bg-[color:var(--marigold)] text-[#1a130a]" : "text-muted-foreground hover:text-white"
                 }`}
               >
-                🎓 Student View
+                {t("studentViewBtn")}
               </button>
               <button
                 onClick={() => setViewMode("parent")}
@@ -310,7 +456,7 @@ function StudentDashboard() {
                   viewMode === "parent" ? "bg-[color:var(--marigold)] text-[#1a130a]" : "text-muted-foreground hover:text-white"
                 }`}
               >
-                👨‍👩‍👧 Parent View
+                {t("parentViewBtn")}
               </button>
             </div>
 
@@ -318,7 +464,7 @@ function StudentDashboard() {
               onClick={logout}
               className="rounded border border-[color:var(--alert)]/30 text-[color:var(--alert)] px-3 py-1.5 text-xs font-semibold hover:bg-[color:var(--alert)]/5 transition"
             >
-              Log out
+              {t("logout")}
             </button>
           </div>
         </div>
@@ -326,38 +472,43 @@ function StudentDashboard() {
         {/* Info Grid: Total Spent, Outstanding Balance, Late Fees, and Deadlines */}
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <ReceiptCard>
-            <p className="font-mono text-xs uppercase tracking-widest text-[color:var(--banyan)]">Total Spent So Far</p>
+            <p className="font-mono text-xs uppercase tracking-widest text-[color:var(--banyan)]">{t("totalBilled")}</p>
             <p className="mt-3 font-serif text-3xl font-semibold text-[color:var(--banyan)]">{inr(totalSpent)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Across {txns.filter(t => t.status === "reconciled").length} settled receipts</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("totalBilledDesc").replace("{count}", String(txns.filter(t => t.status === "reconciled").length))}</p>
           </ReceiptCard>
 
           <ReceiptCard>
-            <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Outstanding Balance</p>
+            <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{t("outstanding")}</p>
             <p className="mt-3 font-serif text-3xl font-semibold">{inr(totalOutstanding)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{assignments.filter(fa => fa.status !== "paid").length} active invoice(s)</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("outstandingDesc").replace("{count}", String(assignments.filter(fa => fa.status !== "paid").length))}</p>
           </ReceiptCard>
 
           <ReceiptCard>
-            <p className="font-mono text-xs uppercase tracking-widest text-[color:var(--alert)]">Late Fees Applied</p>
+            <p className="font-mono text-xs uppercase tracking-widest text-[color:var(--alert)]">{t("lateFees")}</p>
             <p className="mt-3 font-serif text-3xl font-semibold text-[color:var(--alert)]">{inr(lateFeeTotal)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{overdueCount > 0 ? `${overdueCount} overdue invoice(s)` : "No overdue penalties"}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {overdueCount > 0 
+                ? t("lateFeesDesc").replace("{count}", String(overdueCount)) 
+                : t("noLateFeesDesc")
+              }
+            </p>
           </ReceiptCard>
 
           <ReceiptCard>
-            <p className="font-mono text-xs uppercase tracking-widest text-[color:var(--marigold)]">Upcoming Deadline</p>
+            <p className="font-mono text-xs uppercase tracking-widest text-[color:var(--marigold)]">{t("deadline")}</p>
             <p className="mt-3 font-serif text-xl font-semibold text-[color:var(--marigold)]">
               {assignments.find(fa => fa.status !== "paid")?.due_date 
                 ? new Date(assignments.find(fa => fa.status !== "paid")!.due_date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })
-                : "No pending dues"
+                : t("noDeadline")
               }
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">Next installment cut-off</p>
+            <p className="mt-1 text-xs text-muted-foreground">{t("deadlineDesc")}</p>
           </ReceiptCard>
         </div>
 
         {/* Upcoming Payment Deadlines and Relevant Dates Section */}
         <div className="mt-10">
-          <h2 className="font-serif text-xl font-semibold mb-4">📅 Upcoming Deadlines & Relevant Dates</h2>
+          <h2 className="font-serif text-xl font-semibold mb-4">{t("deadlinesTitle")}</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {assignments.map((fa) => {
               const dueDate = new Date(fa.due_date);
@@ -374,20 +525,25 @@ function StudentDashboard() {
                     <p className="font-mono text-lg font-bold mt-2">{inr(getEffectiveAmount(fa))}</p>
                     {fa.waivers && fa.waivers.length > 0 && (
                       <p className="text-[10px] text-[color:var(--banyan)] font-semibold mt-0.5">
-                        ✓ Scholarship Discount Applied ({fa.waivers[0].percent}% Off)
+                        {t("scholarshipApplied").replace("{pct}", String(fa.waivers[0].percent))}
                       </p>
                     )}
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-border/40 text-xs grid grid-cols-2 gap-2">
                     <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase font-mono">Due Date</span>
+                      <span className="text-muted-foreground block text-[10px] uppercase font-mono">{t("dueDate")}</span>
                       <span className="font-mono font-medium">{dueDate.toLocaleDateString("en-IN")}</span>
                     </div>
                     <div>
-                      <span className="text-muted-foreground block text-[10px] uppercase font-mono">Status Indicator</span>
+                      <span className="text-muted-foreground block text-[10px] uppercase font-mono">{t("statusIndicator")}</span>
                       <span className={`font-mono font-semibold ${isOverdue ? "text-[color:var(--alert)]" : "text-[color:var(--banyan)]"}`}>
-                        {fa.status === "paid" ? "Cleared" : isOverdue ? "Overdue" : `${daysLeft} days left`}
+                        {fa.status === "paid" 
+                          ? t("cleared") 
+                          : isOverdue 
+                            ? t("overdue") 
+                            : t("daysLeft").replace("{count}", String(daysLeft))
+                        }
                       </span>
                     </div>
                   </div>
@@ -396,7 +552,7 @@ function StudentDashboard() {
             })}
             {assignments.length === 0 && (
               <div className="col-span-full py-8 text-center text-xs text-muted-foreground">
-                No fee assignments found for your account.
+                {t("noDeadlines")}
               </div>
             )}
           </div>
@@ -420,14 +576,14 @@ function StudentDashboard() {
             {/* Invoices dropdown selector */}
             {assignments.filter(fa => fa.status !== "paid").length > 0 ? (
               <div className="border-t border-border/60 pt-4 space-y-4">
-                <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Pay Due Invoice</p>
+                <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">{t("payDue")}</p>
                 <div>
                   <select
                     value={selectedFeeId}
                     onChange={(e) => { setSelectedFeeId(e.target.value); setPayStatus("idle"); }}
                     className="w-full rounded-md border border-input bg-background p-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-[color:var(--marigold)] text-foreground"
                   >
-                    <option value="">-- Choose an Invoice --</option>
+                    <option value="">{t("chooseInvoice")}</option>
                     {assignments.filter(fa => fa.status !== "paid").map((fa) => {
                       const eff = getEffectiveAmount(fa);
                       return (
@@ -446,7 +602,7 @@ function StudentDashboard() {
                       disabled={payStatus === "loading"}
                       className="w-full rounded-md bg-[color:var(--marigold)] px-4 py-2.5 text-sm font-medium text-[color:var(--primary-foreground)] hover:brightness-95 disabled:opacity-50"
                     >
-                      {payStatus === "loading" && payMsg.includes("Order") ? "Launching Gateway..." : `Pay ${inr(payAmount)} Now`}
+                      {payStatus === "loading" && payMsg.includes("Order") ? t("launchingGateway") : t("payNow").replace("{amt}", inr(payAmount))}
                     </button>
 
                     <div className="flex gap-2">
@@ -455,25 +611,25 @@ function StudentDashboard() {
                         disabled={payStatus === "loading"}
                         className="flex-1 rounded-md border border-border py-2 text-xs font-semibold hover:bg-secondary/40 transition"
                       >
-                        Log Cash
+                        {t("logCash")}
                       </button>
                       <button
                         onClick={() => logOfflinePayment("cheque")}
                         disabled={payStatus === "loading"}
                         className="flex-1 rounded-md border border-border py-2 text-xs font-semibold hover:bg-secondary/40 transition"
                       >
-                        Log Cheque
+                        {t("logCheque")}
                       </button>
                     </div>
 
                     {/* Offline slip attachment uploads */}
                     <div className="bg-secondary/20 border border-border/40 rounded-lg p-3 space-y-2 text-left">
-                      <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">Deposit slip photo</p>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{t("depositSlip")}</p>
                       <input
                         type="text"
                         value={slipNote}
                         onChange={(e) => setSlipNote(e.target.value)}
-                        placeholder="Transaction ID / Slip reference"
+                        placeholder={t("slipRef")}
                         className="w-full rounded border border-input bg-background p-1.5 text-[11px] focus:outline-none"
                       />
                       <input
@@ -487,8 +643,8 @@ function StudentDashboard() {
                 )}
 
                 {payStatus === "success" && (
-                  <div className="bg-[color:var(--banyan)]/10 border border-[color:var(--banyan)]/20 text-[color:var(--banyan)] text-xs rounded p-3">
-                    <p className="font-semibold">✓ Payment Recorded</p>
+                  <div className="bg-[color:var(--banyan)]/10 border border-[color:var(--banyan)]/20 text-[color:var(--banyan)] text-xs rounded p-3 text-left">
+                    <p className="font-semibold">{t("paymentRecorded")}</p>
                     <p className="mt-1 opacity-80">{payMsg}</p>
                     {recentTxnId && (
                       <button
@@ -498,21 +654,21 @@ function StudentDashboard() {
                         }}
                         className="mt-2 block underline text-xs font-bold"
                       >
-                        View Receipt
+                        {t("viewReceipt")}
                       </button>
                     )}
                   </div>
                 )}
 
                 {payStatus === "error" && (
-                  <div className="bg-[color:var(--alert)]/10 border border-[color:var(--alert)]/20 text-[color:var(--alert)] text-xs rounded p-3">
+                  <div className="bg-[color:var(--alert)]/10 border border-[color:var(--alert)]/20 text-[color:var(--alert)] text-xs rounded p-3 text-left">
                     {payMsg}
                   </div>
                 )}
               </div>
             ) : (
-              <div className="border-t border-border/60 pt-4 text-xs font-medium text-[color:var(--banyan)]">
-                ✓ All school invoices are settled!
+              <div className="border-t border-border/60 pt-4 text-xs font-medium text-[color:var(--banyan)] text-left">
+                {t("settled")}
               </div>
             )}
           </ReceiptCard>
@@ -521,20 +677,20 @@ function StudentDashboard() {
           <ReceiptCard className="lg:col-span-2">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-serif text-lg font-semibold">💳 Past Transactions & Spending</p>
-                <p className="text-xs text-muted-foreground">Complete history of all paid & pending receipts</p>
+                <p className="font-serif text-lg font-semibold">{t("pastTxns")}</p>
+                <p className="text-xs text-muted-foreground">{t("pastTxnsDesc")}</p>
               </div>
-              <span className="font-mono text-xs text-muted-foreground">{txns.length} records</span>
+              <span className="font-mono text-xs text-muted-foreground">{t("records").replace("{count}", String(txns.length))}</span>
             </div>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs uppercase tracking-widest text-muted-foreground">
-                    <th className="pb-3 pr-4 font-medium">Date</th>
-                    <th className="pb-3 pr-4 font-medium">Method</th>
-                    <th className="pb-3 pr-4 font-medium">Amount Spent</th>
-                    <th className="pb-3 pr-4 font-medium">Status</th>
-                    <th className="pb-3 font-medium text-right">Receipt</th>
+                    <th className="pb-3 pr-4 font-medium">{t("tblDate")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("tblMethod")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("tblAmount")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("tblStatus")}</th>
+                    <th className="pb-3 font-medium text-right">{t("tblReceipt")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -555,7 +711,7 @@ function StudentDashboard() {
                           onClick={() => setReceipt(t)}
                           className="text-xs font-medium text-[color:var(--marigold)] hover:underline"
                         >
-                          View PDF Receipt
+                          {translations[lang].viewPdfReceipt}
                         </button>
                       </td>
                     </tr>
@@ -563,7 +719,7 @@ function StudentDashboard() {
                   {txns.length === 0 && (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-xs text-muted-foreground">
-                        No transactions recorded yet.
+                        {t("noTxns")}
                       </td>
                     </tr>
                   )}
@@ -582,33 +738,33 @@ function StudentDashboard() {
             <div id="vittam-receipt" className="w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
               <div className="receipt-glass p-8 print:bg-white print:backdrop-blur-none border border-border/80">
                 <div className="flex items-center justify-between">
-                  <p className="font-serif text-lg font-semibold text-foreground">Vittam Official Receipt</p>
-                  <p className="font-mono text-xs text-muted-foreground">TXN #{receipt.id.slice(0, 8).toUpperCase()}</p>
+                  <p className="font-serif text-lg font-semibold text-foreground">{t("officialReceipt")}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{t("txnHash").replace("{hash}", receipt.id.slice(0, 8).toUpperCase())}</p>
                 </div>
                 <div className="mt-6 space-y-3 border-y border-dashed border-border/80 py-6 text-left">
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Student Name</span>
+                    <span className="text-muted-foreground">{t("studentName")}</span>
                     <span className="font-semibold text-white print:text-black">{student?.name}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Class · Roll No</span>
+                    <span className="text-muted-foreground">{t("classRoll")}</span>
                     <span className="font-mono font-semibold text-white print:text-black">{student?.class} · {student?.roll_no}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Payment Date</span>
+                    <span className="text-muted-foreground">{t("paymentDate")}</span>
                     <span className="font-mono text-white print:text-black">{new Date(receipt.created_at).toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Payment Method</span>
+                    <span className="text-muted-foreground">{t("paymentMethod")}</span>
                     <span className="font-mono text-white print:text-black">{receipt.method.toUpperCase()}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Status</span>
+                    <span className="text-muted-foreground">{t("tblStatus")}</span>
                     <span className="font-semibold text-white print:text-black">{receipt.status.toUpperCase()}</span>
                   </div>
                 </div>
                 <div className="mt-6 flex items-baseline justify-between">
-                  <span className="text-sm text-muted-foreground">Amount Spent / Received</span>
+                  <span className="text-sm text-muted-foreground">{t("spentReceived")}</span>
                   <span className="font-serif text-3xl font-semibold text-[color:var(--marigold)]">{inr(receipt.amount)}</span>
                 </div>
                 <div className="mt-8 flex gap-2 print:hidden">
@@ -616,10 +772,10 @@ function StudentDashboard() {
                     onClick={() => window.print()}
                     className="flex-1 rounded-md bg-[color:var(--marigold)] px-4 py-2 text-sm font-medium text-[color:var(--primary-foreground)] hover:brightness-95"
                   >
-                    Print PDF
+                    {t("printPdf")}
                   </button>
                   <button onClick={() => setReceipt(null)} className="rounded-md border border-border px-4 py-2 text-sm text-white/80 hover:text-white">
-                    Close
+                    {t("close")}
                   </button>
                 </div>
               </div>

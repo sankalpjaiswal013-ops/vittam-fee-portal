@@ -553,6 +553,7 @@ function StudentsTab() {
   const [converterRows, setConverterRows] = useState<any[]>([]);
   const [scanning, setScanning] = useState(false);
   const [docTextContent, setDocTextContent] = useState<string>("");
+  const [converterError, setConverterError] = useState<string>("");
 
   // Add student form
   const [mName, setMName] = useState(""); const [mRoll, setMRoll] = useState("");
@@ -1021,6 +1022,7 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                       const file = e.target.files?.[0];
                       if (file) {
                         setDocFile(file);
+                        setConverterError("");
                         if (file.type.startsWith("image/")) {
                           setDocPreviewUrl(URL.createObjectURL(file));
                           setDocTextContent("");
@@ -1073,8 +1075,24 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                     <button
                       onClick={() => {
                         setScanning(true);
+                        setConverterError("");
                         setTimeout(() => {
                           setScanning(false);
+                          
+                          // Validate if the file is a CSV and contains student columns
+                          const isCsv = docFile?.name.toLowerCase().endsWith(".csv");
+                          const hasHeaders = docTextContent && (
+                            docTextContent.toLowerCase().includes("name") ||
+                            docTextContent.toLowerCase().includes("roll") ||
+                            docTextContent.toLowerCase().includes("class")
+                          );
+
+                          if (!isCsv || !hasHeaders) {
+                            setConverterError("invalid file");
+                            setConverterRows([]);
+                            return;
+                          }
+
                           if (docTextContent) {
                             const rows = parseCsv(docTextContent);
                             if (rows.length > 0) {
@@ -1082,12 +1100,8 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                               return;
                             }
                           }
-                          // Fallback to mock scanned results for hackathon demo
-                          setConverterRows([
-                            { name: "Devendra Singh", roll_no: "10B-05", class: "10-B", guardian_name: "Gajendra Singh", guardian_contact: "+919876543210", email: "devendra@gmail.com", branch: "Jaipur" },
-                            { name: "Anjali Sharma", roll_no: "9A-04", class: "9-A", guardian_name: "Sunil Sharma", guardian_contact: "+919922883344", email: "anjali@yahoo.com", branch: "Dharamsala" },
-                            { name: "Rahul Verma", roll_no: "8C-12", class: "8-C", guardian_name: "Meena Verma", guardian_contact: "+919811223344", email: "rahul@gmail.com", branch: "Jaipur" }
-                          ]);
+                          
+                          setConverterError("invalid file");
                         }, 1500);
                       }}
                       disabled={scanning}
@@ -1101,12 +1115,18 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
                         setDocPreviewUrl("");
                         setConverterRows([]);
                         setDocTextContent("");
+                        setConverterError("");
                       }}
                       className="border border-[#27272A] text-white/70 px-3 py-2 rounded text-xs hover:bg-[#27272A]"
                     >
                       Reset
                     </button>
                   </div>
+                  {converterError && (
+                    <div className="mt-3 p-2 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded text-center font-mono font-semibold">
+                      {converterError}
+                    </div>
+                  )}
                 </div>
               )}
             </AdminCard>
