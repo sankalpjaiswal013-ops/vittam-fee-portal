@@ -165,9 +165,11 @@ function StudentDashboard() {
           fee_assignment_id: selectedFeeId,
           amount: payAmount,
           method: "upi",
-          status: "reconciled",
+          status: "pending",
           razorpay_payment_id: mockPaymentId,
-          razorpay_order_id: mockOrderId
+          razorpay_order_id: mockOrderId,
+          deposit_slip_note: slipNote || "UPI payment checkout",
+          slip_url: null
         })
         .select()
         .single();
@@ -178,13 +180,8 @@ function StudentDashboard() {
         return;
       }
 
-      await supabase
-        .from("fee_assignments")
-        .update({ status: "paid" })
-        .eq("id", selectedFeeId);
-
       setPayStatus("success");
-      setPayMsg("Payment verified! Your ledger is updated.");
+      setPayMsg("UPI payment initiated. Awaiting admin verification.");
       setRecentTxnId(data.id);
       setSelectedFeeId("");
       setSlipFile(null);

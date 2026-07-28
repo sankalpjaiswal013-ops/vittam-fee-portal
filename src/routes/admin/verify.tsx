@@ -58,7 +58,7 @@ function VerifySlips() {
           students(name, roll_no, class)
         `)
         .eq("status", "pending")
-        .in("method", ["cash", "cheque"])
+        .in("method", ["cash", "cheque", "upi"])
         .order("created_at", { ascending: true });
 
       if (error) {

@@ -687,8 +687,17 @@ Kabir Menon,7C-22,7-C,Anita Menon,+919845567780,anita@yahoo.com,Jaipur Yad`;
   async function bulkDeleteStudents() {
     const ids = Array.from(selectedIds);
     if (!ids.length) return;
-    if (!confirm(`Are you sure you want to delete ${ids.length} selected student(s)? This will also remove their balance and fee records.`)) return;
+    if (!confirm(`Are you sure you want to delete ${ids.length} selected student(s)? This will also remove their balance, fee records, and transactions.`)) return;
     setLoading(true);
+    
+    // First delete transactions associated with these students to satisfy FK constraints
+    const { error: txnError } = await supabase.from("transactions").delete().in("student_id", ids);
+    if (txnError) {
+      alert(`Delete transactions failed: ${txnError.message}`);
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase.from("students").delete().in("id", ids);
     if (error) {
       alert(`Delete failed: ${error.message}`);
@@ -1370,7 +1379,7 @@ function VerifyTab() {
     setLoading(true);
     const { data } = await supabase.from("transactions")
       .select(`id, amount, method, status, deposit_slip_note, slip_url, created_at, fee_assignments(id, amount, fee_types(name)), students(name, roll_no, class)`)
-      .eq("status", "pending").in("method", ["cash", "cheque"]).order("created_at");
+      .eq("status", "pending").in("method", ["cash", "cheque", "upi"]).order("created_at");
     setSlips((data as any) || []);
     setLoading(false);
   };
